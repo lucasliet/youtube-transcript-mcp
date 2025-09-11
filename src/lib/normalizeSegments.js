@@ -1,12 +1,12 @@
-import { TranscriptSegment } from '../types.js'
+ 
 
 /**
  * Normalizes, deduplicates and sorts segments by start time.
  * @param items The raw segments list.
  * @returns Cleaned segment list.
  */
-export function normalizeSegments(items: TranscriptSegment[]) {
-  const seen = new Set<string>()
+export function normalizeSegments(items) {
+  const seen = new Set()
   const cleaned = items
     .filter((s) => s && typeof s.text === 'string')
     .map((s) => ({ text: s.text.trim(), startInMs: s.startInMs, duration: s.duration }))

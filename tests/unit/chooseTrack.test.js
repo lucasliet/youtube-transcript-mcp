@@ -27,3 +27,4 @@ test('chooseTrack: uses default indices when no preferred', () => {
   const picked = __testables.chooseTrack(tracks, [], 1, undefined)
   assert.deepEqual(picked, { url: 'u2', lang: 'es' })
 })
+

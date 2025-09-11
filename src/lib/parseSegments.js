@@ -1,4 +1,4 @@
-import { TranscriptSegment } from '../types.js'
+ 
 
 /**
  * Parses YouTube caption XML into normalized segments.
@@ -6,7 +6,7 @@ import { TranscriptSegment } from '../types.js'
  * @param xml The caption XML content.
  * @returns The list of normalized segments.
  */
-export function parseSegments(xml: string): TranscriptSegment[] {
+export function parseSegments(xml) {
   const t1 = parseTranscriptTexts(xml)
   if (t1.length) return t1
   return parseTimedtext(xml)
@@ -17,10 +17,10 @@ export function parseSegments(xml: string): TranscriptSegment[] {
  * @param xml The XML content.
  * @returns Segments list.
  */
-export function parseTranscriptTexts(xml: string): TranscriptSegment[] {
-  const out: TranscriptSegment[] = []
-  const textRe = /<text[^>]*start="([^"]+)"[^>]*dur="([^"]+)"[^>]*>([\s\S]*?)<\/text>/g
-  let m: RegExpExecArray | null
+export function parseTranscriptTexts(xml) {
+  const out = []
+  const textRe = /<text[^>]*start=\"([^\"]+)\"[^>]*dur=\"([^\"]+)\"[^>]*>([\s\S]*?)<\/text>/g
+  let m
   while ((m = textRe.exec(xml)) !== null) {
     const text = decodeHtml(String(m[3] || '')).trim()
     if (!text) continue
@@ -36,10 +36,10 @@ export function parseTranscriptTexts(xml: string): TranscriptSegment[] {
  * @param xml The XML content.
  * @returns Segments list.
  */
-export function parseTimedtext(xml: string): TranscriptSegment[] {
-  const out: TranscriptSegment[] = []
-  const pRe = /<p[^>]*\bt="(\d+)"[^>]*\bd="(\d+)"[^>]*>([\s\S]*?)<\/p>/g
-  let p: RegExpExecArray | null
+export function parseTimedtext(xml) {
+  const out = []
+  const pRe = /<p[^>]*\bt=\"(\d+)\"[^>]*\bd=\"(\d+)\"[^>]*>([\s\S]*?)<\/p>/g
+  let p
   while ((p = pRe.exec(xml)) !== null) {
     const start = Number(p[1] || 0)
     const duration = Number(p[2] || 0)
@@ -56,11 +56,11 @@ export function parseTimedtext(xml: string): TranscriptSegment[] {
  * @param s Input string.
  * @returns Decoded string.
  */
-export function decodeHtml(s: string) {
+export function decodeHtml(s) {
   return s
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
+    .replace(/&quot;/g, '\"')
     .replace(/&#39;/g, "'")
 }

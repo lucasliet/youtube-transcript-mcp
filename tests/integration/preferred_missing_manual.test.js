@@ -4,7 +4,7 @@ import { transcriptYt } from '../../src/tool/transcriptYt.js'
 
 test('integration: when preferred language missing, picks first manual available', async () => {
   const originalFetch = globalThis.fetch
-  globalThis.fetch = (async (input: any) => {
+  globalThis.fetch = (async (input) => {
     const url = typeof input === 'string' ? input : String(input?.url || '')
     if (url.startsWith('https://www.youtube.com/watch')) {
       return mkResponse(200, '<html>"INNERTUBE_API_KEY":"abc123"</html>')
@@ -28,15 +28,16 @@ test('integration: when preferred language missing, picks first manual available
       return mkResponse(200, '<transcript><text start="0.0" dur="1.0">Hola</text></transcript>')
     }
     return mkResponse(404, 'not found')
-  }) as any
+  })
 
   const res = await transcriptYt({ videoUrl: 'https://youtu.be/dQw4w9WgXcQ', preferredLanguages: ['pt-BR'] })
   assert.ok(Array.isArray(res))
   assert.equal(res?.[0].text, 'Hola')
 
-  globalThis.fetch = originalFetch as any
+  globalThis.fetch = originalFetch
 })
 
-function mkResponse(status: number, body: string, contentType = 'text/html') {
+function mkResponse(status, body, contentType = 'text/html') {
   return new Response(body, { status, headers: { 'content-type': contentType } })
 }
+

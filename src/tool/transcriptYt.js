@@ -1,4 +1,3 @@
-import { TranscriptSegment, VideoTranscriptRequest } from '../types.js'
 import { extractVideoId } from '../lib/extractVideoId.js'
 import { fetchWatchHtml } from '../lib/fetchWatchHtml.js'
 import { extractInnertubeApiKey } from '../lib/extractInnertubeApiKey.js'
@@ -15,7 +14,7 @@ import { logError } from '../lib/log.js'
  * @param args The request payload with videoUrl and optional preferredLanguages.
  * @returns A list of transcript segments or null when unavailable.
  */
-export async function transcriptYt(args: VideoTranscriptRequest): Promise<TranscriptSegment[] | null> {
+export async function transcriptYt(args) {
   try {
     const id = extractVideoId(args.videoUrl)
     if (!id) {
@@ -33,7 +32,7 @@ export async function transcriptYt(args: VideoTranscriptRequest): Promise<Transc
     const tracks = data?.captions?.playerCaptionsTracklistRenderer?.captionTracks || []
     const audioTracks = data?.captions?.playerCaptionsTracklistRenderer?.audioTracks || []
     const defaultCaptionTrackIndex = typeof audioTracks?.[0]?.defaultCaptionTrackIndex === 'number' ? audioTracks[0].defaultCaptionTrackIndex : undefined
-    const defaultTranslationSourceTrackIndices = data?.captions?.playerCaptionsTracklistRenderer?.defaultTranslationSourceTrackIndices as number[] | undefined
+    const defaultTranslationSourceTrackIndices = data?.captions?.playerCaptionsTracklistRenderer?.defaultTranslationSourceTrackIndices
     if (!Array.isArray(tracks) || tracks.length === 0) {
       logError('no_captions', 'no_caption_tracks_found')
       return null
@@ -53,7 +52,7 @@ export async function transcriptYt(args: VideoTranscriptRequest): Promise<Transc
       return null
     }
     return segments
-  } catch (err: any) {
+  } catch (err) {
     const msg = String(err?.message || 'unknown_error')
     if (msg.includes('yt_request_failed_') || msg === 'ip_blocked') logError('network_error', msg)
     else if (msg === 'video_unavailable' || msg === 'video_unplayable' || msg === 'age_restricted' || msg === 'request_blocked') logError('inaccessible', msg)
@@ -80,7 +79,7 @@ export const tool = ['transcript_yt', {
       strict: true
     }
   },
-  fn: async (args: VideoTranscriptRequest): Promise<TranscriptSegment[] | null> => transcriptYt(args)
+  fn: async (args) => transcriptYt(args)
 }]
 
 export const __testables = {

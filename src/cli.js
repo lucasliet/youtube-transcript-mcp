@@ -30,7 +30,7 @@ async function startMcpServer() {
     capabilities: { tools: {} }
   })
 
-  ;(server as any).setRequestHandler('tools/list', async () => ({
+  server.setRequestHandler('tools/list', async () => ({
     tools: [
       {
         name: 'transcript_yt',
@@ -48,7 +48,7 @@ async function startMcpServer() {
     ]
   }))
 
-  ;(server as any).setRequestHandler('tools/call', async (req: any) => {
+  server.setRequestHandler('tools/call', async (req) => {
     const name = req?.params?.name
     const args = req?.params?.arguments || {}
     if (name !== 'transcript_yt') {
@@ -70,8 +70,8 @@ async function startMcpServer() {
  * @param argv The argv slice (excluding node and script).
  * @returns A map of parsed flags.
  */
-function parseArgs(argv: string[]) {
-  const out: Record<string, string | boolean> = {}
+function parseArgs(argv) {
+  const out = {}
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
     if (a.startsWith('--')) {

@@ -4,7 +4,7 @@
  * @param videoId The YouTube video ID.
  * @returns The parsed JSON response object.
  */
-export async function fetchInnertubePlayer(apiKey: string, videoId: string) {
+export async function fetchInnertubePlayer(apiKey, videoId) {
   const url = `https://www.youtube.com/youtubei/v1/player?key=${apiKey}`
   const res = await fetch(url, {
     method: 'POST',
@@ -15,4 +15,3 @@ export async function fetchInnertubePlayer(apiKey: string, videoId: string) {
   if (!res.ok) throw new Error(`yt_request_failed_${res.status}`)
   return res.json()
 }
-

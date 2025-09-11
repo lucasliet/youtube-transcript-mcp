@@ -7,15 +7,15 @@
  * @returns An object with url and lang, or null when none found.
  */
 export function chooseTrack(
-  tracks: any[],
-  preferredLanguages: string[] | undefined,
-  defaultCaptionTrackIndex: number | undefined,
-  defaultTranslationSourceTrackIndices: number[] | undefined
+  tracks,
+  preferredLanguages,
+  defaultCaptionTrackIndex,
+  defaultTranslationSourceTrackIndices
 ) {
   const manual = tracks.filter((t) => t.kind !== 'asr' && t.baseUrl)
   const asr = tracks.filter((t) => t.kind === 'asr' && t.baseUrl)
   const prefs = (preferredLanguages || []).map((x) => x.toLowerCase())
-  const scan = (list: any[]) => {
+  const scan = (list) => {
     for (const lang of prefs) {
       const t = list.find((x) => x.languageCode === lang || String(x.languageCode || '').toLowerCase().startsWith(lang))
       if (t) return t
@@ -40,4 +40,3 @@ export function chooseTrack(
   if (asr[0]) return { url: String(asr[0].baseUrl).replace('&fmt=srv3', ''), lang: asr[0].languageCode }
   return null
 }
-

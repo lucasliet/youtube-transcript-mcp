@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "MCP Server (src)",
+      "program": "${workspaceFolder}/src/cli.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "CLI One-off (src)",
+      "program": "${workspaceFolder}/src/cli.js",
+      "args": [
+        "--videoUrl",
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "--preferredLanguages",
+        "pt-BR,en"
+      ],
+      "cwd": "${workspaceFolder}",
+      
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach 9229",
+      "port": 9229,
+      "restart": true,
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

@@ -16,3 +16,4 @@ test('extractVideoId: invalid URL', () => {
   const id = __testables.extractVideoId('https://example.com')
   assert.equal(id, null)
 })
+

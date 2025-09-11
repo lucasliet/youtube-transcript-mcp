@@ -17,3 +17,4 @@ test('parseSegments: timedtext/p format', () => {
   assert.deepEqual(segs[0], { text: 'Hello World', startInMs: 0, duration: 2300 })
   assert.deepEqual(segs[1], { text: 'Again', startInMs: 2300, duration: 1800 })
 })
+
