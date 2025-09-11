@@ -2,9 +2,9 @@
 
 ## Instalação / Uso via npx
 ```
-npx youtube-transcript-mcp
+npx youtube-transcript-mcp --videoUrl "https://www.youtube.com/watch?v=VIDEO_ID" --preferredLanguages "pt-BR,en"
 ```
-(Assumindo publicação do pacote com bin configurado.)
+Retorna JSON no stdout com a lista de segmentos ou `null` em falha.
 
 ## Registro da Ferramenta no MCP Host
 Exemplo de configuração (pseudo JSON):
@@ -21,6 +21,28 @@ Exemplo de configuração (pseudo JSON):
   ]
 }
 ```
+
+Uso programático (import do pacote):
+```
+import tools from 'youtube-transcript-mcp'
+
+// tools é um array contendo ['transcript_yt', { schema, fn }]
+```
+
+## Configuração como MCP Server
+Coloque no arquivo de configuração do host MCP:
+```
+{
+  "mcpServers": {
+    "youtube-transcript": {
+      "command": "npx",
+      "args": ["-y", "--package=github:lucasliet/youtube-transcript-mcp#main", "youtube-transcript-mcp"],
+      "env": {}
+    }
+  }
+}
+```
+Este servidor utiliza `@modelcontextprotocol/sdk` e comunica via stdio.
 
 ## Chamada
 Entrada:
