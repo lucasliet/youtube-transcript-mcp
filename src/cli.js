@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 import { transcriptYt } from './tool/transcriptYt.js'
+import { Server } from '@modelcontextprotocol/sdk/server/index.js'
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 
 /**
  * CLI/MCP entrypoint. If --videoUrl is provided, runs a one-off fetch and prints JSON.
@@ -20,9 +23,6 @@ async function main() {
  * Starts an MCP server over stdio with the transcript_yt tool.
  */
 async function startMcpServer() {
-  const { Server } = await import('@modelcontextprotocol/sdk/server/index.js')
-  const { StdioServerTransport } = await import('@modelcontextprotocol/sdk/server/stdio.js')
-
   const server = new Server({
     name: 'youtube-transcript-mcp',
     version: '0.1.0'
@@ -30,7 +30,7 @@ async function startMcpServer() {
     capabilities: { tools: {} }
   })
 
-  server.setRequestHandler('tools/list', async () => ({
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
       {
         name: 'transcript_yt',
@@ -44,21 +44,26 @@ async function startMcpServer() {
           required: ['videoUrl'],
           additionalProperties: false
         }
+
       }
     ]
   }))
 
-  server.setRequestHandler('tools/call', async (req) => {
-    const name = req?.params?.name
-    const args = req?.params?.arguments || {}
-    if (name !== 'transcript_yt') {
-      return { content: [{ type: 'text', text: 'Tool not found' }], isError: true }
+  server.setRequestHandler(CallToolRequestSchema, async (req) => {
+    try {
+      const name = req?.params?.name
+      const args = req?.params?.arguments || {}
+      if (name !== 'transcript_yt') {
+        return { content: [{ type: 'text', text: 'Tool not found' }], isError: true }
+      }
+      const res = await transcriptYt({
+        videoUrl: String(args.videoUrl || ''),
+        preferredLanguages: Array.isArray(args.preferredLanguages) ? args.preferredLanguages : undefined
+      })
+      return { content: [{ type: 'json', json: res }] }
+    } catch (e) {
+      return { content: [{ type: 'text', text: `Internal error: ${e?.message || e}` }], isError: true }
     }
-    const res = await transcriptYt({
-      videoUrl: String(args.videoUrl || ''),
-      preferredLanguages: Array.isArray(args.preferredLanguages) ? args.preferredLanguages : undefined
-    })
-    return { content: [{ type: 'json', json: res }] }
   })
 
   const transport = new StdioServerTransport()
