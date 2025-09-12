@@ -60,7 +60,7 @@ async function startMcpServer() {
         videoUrl: String(args.videoUrl || ''),
         preferredLanguages: Array.isArray(args.preferredLanguages) ? args.preferredLanguages : undefined
       })
-      return { content: [{ type: 'json', json: res }] }
+      return { content: [{ type: 'text', text: JSON.stringify(res) }] }
     } catch (e) {
       return { content: [{ type: 'text', text: `Internal error: ${e?.message || e}` }], isError: true }
     }
