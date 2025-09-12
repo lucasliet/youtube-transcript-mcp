@@ -53,10 +53,10 @@ export async function transcriptYt(args) {
     }
     return segments
   } catch (err) {
-    const msg = String(err?.message || 'unknown_error')
+    const msg = String(err?.message || '')
     if (msg.includes('yt_request_failed_') || msg === 'ip_blocked') logError('network_error', msg)
     else if (msg === 'video_unavailable' || msg === 'video_unplayable' || msg === 'age_restricted' || msg === 'request_blocked') logError('inaccessible', msg)
-    else logError('other_error', msg)
+    else logError('other_error', 'unexpected_error')
     return null
   }
 }

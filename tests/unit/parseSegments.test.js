@@ -18,3 +18,10 @@ test('parseSegments: timedtext/p format', () => {
   assert.deepEqual(segs[1], { text: 'Again', startInMs: 2300, duration: 1800 })
 })
 
+test('parseSegments: zero start and duration', () => {
+  const xml = '<transcript><text start="0.0" dur="0.0">Zero</text></transcript>'
+  const segs = __testables.parseSegments(xml)
+  assert.equal(segs.length, 1)
+  assert.deepEqual(segs[0], { text: 'Zero', startInMs: 0, duration: 0 })
+})
+
