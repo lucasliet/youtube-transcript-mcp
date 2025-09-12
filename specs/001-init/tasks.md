@@ -14,7 +14,7 @@ Refer to template; tasks customized para este feature.
 - [x] T002 Inicializar package.json (ESM, bin src/cli.js) e adicionar @modelcontextprotocol/sdk
 - [x] T003 Adicionar script de testes usando node:test em package.json
 - [x] T004 Definir execução via npx GitHub (prepare removido; JS direto)
-- [ ] T005 [P] Adicionar configuração mínima de lint (eslint) e script lint
+- [x] T005 [P] Adicionar configuração mínima de lint (eslint) e script lint
 
 ## Phase 3.2: Tests First (TDD)
 - [x] T006 Criar teste unit extractVideoId casos válidos/invalidos em tests/unit/extractVideoId.test.js
@@ -45,16 +45,16 @@ Refer to template; tasks customized para este feature.
 
 ## Phase 3.4: Integration / Ajustes
 - [x] T029 Validar handlers MCP (ListTools/CallTool) e tipo de retorno (text) compatível com SDK
-- [ ] T030 [P] Ajustar testes para cobrir edge de timestamps 0 e duração 0
-- [ ] T031 [P] Adicionar teste integração sem preferredLanguages (retorna default) em tests/integration/no_preferred.test.js
-- [ ] T032 [P] Adicionar teste integração duplicados eliminados em tests/integration/dedup.test.js
+- [x] T030 [P] Ajustar testes para cobrir edge de timestamps 0 e duração 0
+- [x] T031 [P] Adicionar teste integração sem preferredLanguages (retorna default) em tests/integration/no_preferred.test.js
+- [x] T032 [P] Adicionar teste integração duplicados eliminados em tests/integration/dedup.test.js
 - [x] T033 Revisar tratamento de erros garantindo null uniforme
 
 ## Phase 3.5: Polish
-- [ ] T034 [P] Adicionar lint e checagens opcionais
+- [x] T034 [P] Adicionar lint e checagens opcionais
 - [x] T035 Atualizar quickstart.md com execução via GitHub main
-- [ ] T036 [P] Revisar mensagens de log para consistência
-- [ ] T037 [P] Checar performance em vídeo longo simulado (mock grande) garantindo não truncamento
+- [x] T036 [P] Revisar mensagens de log para consistência
+- [x] T037 [P] Checar performance em vídeo longo simulado (mock grande) garantindo não truncamento
 - [x] T039 Verificar versão 0.1.0 em package.json
 
 ## Dependencies
