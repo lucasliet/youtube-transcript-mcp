@@ -1,7 +1,7 @@
 # Implementation Plan: YouTube Transcript MCP Tool
 
-**Branch**: `001-criar-mcp-que` | **Date**: 2025-09-11 | **Spec**: specs/001-criar-mcp-que/spec.md
-**Input**: Feature specification from `/specs/001-criar-mcp-que/spec.md`
+**Branch**: `001-init` | **Date**: 2025-09-11 | **Spec**: specs/001-init/spec.md
+**Input**: Feature specification from `/specs/001-init/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -19,14 +19,14 @@
 Ferramenta MCP que recebe URL de vídeo YouTube e lista opcional de idiomas preferidos, retorna lista de segmentos (texto, startInMs, duration). Requisitos principais: equivalência funcional ao exemplo, sem cache, sem truncamento, apenas memória, logs mínimos, fallback de idioma, diferenciar causas em log mas payload de erro uniforme (null).
 
 ## Technical Context
-**Language/Version**: TypeScript (Node)
-**Primary Dependencies**: fast-xml-parser (parsing XML), fetch API (nativo Node >=18) 
+**Language/Version**: JavaScript ESM (Node >=18)
+**Primary Dependencies**: @modelcontextprotocol/sdk (MCP server), fetch API (nativo Node >=18)
 **Storage**: Não utiliza armazenamento persistente
-**Testing**: Jest, se ausente, definir script de teste minimal
+**Testing**: node:test (nativo, sem dependências)
 **Target Platform**: Node (executado via npx no host MCP)
 **Project Type**: single
 **Performance Goals**: Processar transcrição típica (<2s) em rede normal
-**Constraints**: Sem cache, sem truncamento interno, apenas memória, tolerância a erros retornando null
+**Constraints**: Sem cache, sem truncamento interno, apenas memória; retorno uniforme null em falhas; respostas MCP devem usar tipos suportados (text)
 **Scale/Scope**: Uso por agente LLM para poucas requisições interativas (baixa concorrência)
 
 ## Constitution Check
@@ -37,7 +37,7 @@ Ferramenta MCP que recebe URL de vídeo YouTube e lista opcional de idiomas pref
 - Avoiding patterns? Sim (sem repos, sem DTO extra)
 
 **Architecture**:
-- Libraries: 0 adicionais além de parser XML
+- Libraries: SDK MCP oficial; sem parser XML externo (regex)
 - CLI per library: Não aplicável (npx entrypoint único)
 - Library docs: Quickstart fornecerá uso
 
@@ -54,7 +54,7 @@ Ferramenta MCP que recebe URL de vídeo YouTube e lista opcional de idiomas pref
 ## Project Structure
 ### Documentation (this feature)
 ```
-specs/001-criar-mcp-que/
+specs/001-init/
 ├── plan.md
 ├── research.md
 ├── data-model.md
@@ -65,12 +65,13 @@ specs/001-criar-mcp-que/
 ### Source Code (repository root)
 ```
 src/
-  tool/ (ou equivalente)       # implementação da ferramenta MCP
-  index.ts                     # export main tool array
+  tool/                        # implementação da ferramenta MCP (JS)
+  lib/                         # utilitários (JS)
+  index.js                     # export main tool array
+  cli.js                       # entrypoint MCP server/CLI
 tests/
-  contract/ (vazio: sem HTTP)
-  integration/ (fluxo completo mockando fetch)
-  unit/ (funções utilitárias)
+  integration/                 # fluxo completo mockando fetch (JS)
+  unit/                        # funções utilitárias (JS)
 ```
 **Structure Decision**: Single project
 
@@ -78,17 +79,17 @@ tests/
 Decisions:
 - Cache: omitido (especificação exige ausência)
 - Truncamento: nenhum; consumidor trata
-- Logging: apenas categorias (invalid_url, no_captions, inaccessible, network_error)
+- Logging: apenas categorias (invalid_url, no_captions, inaccessible, network_error, other_error)
 - Idioma: matching case-insensitive e prefixo
-- Test Framework: escolher Jest se não existente; fallback para node:test se preferir zero dependências
-Alternatives: Adicionar cache (rejeitado), compressão de resposta (rejeitado), normalização avançada HTML (rejeitado; escopo mínimo)
+- Test Framework: node:test (nativo)
+Alternatives: Adicionar cache (rejeitado), compressão de resposta (rejeitado), normalização avançada HTML (rejeitado; escopo mínimo), fast-xml-parser (rejeitado; regex suficiente)
 Output: research.md
 
 ## Phase 1: Design & Contracts
-Data Model: definir interfaces TranscriptSegment, VideoTranscriptRequest
-Contratos externos HTTP: inexistentes (ferramenta local). Criar README rápido de tool (quickstart) para integração MCP.
-Contract Tests: substituídos por testes de interface da função tool (entrada → saída)
-Quickstart: comando npx configuração mcp + exemplo de chamada com preferredLanguages
+Data Model: entidades conceituais TranscriptSegment, VideoTranscriptRequest (JS)
+Contratos externos HTTP: inexistentes (ferramenta local). Quickstart cobre integração MCP.
+Contract Tests: interface da função tool (entrada → saída) e validação dos handlers MCP (ListTools/CallTool) com tipos suportados
+Quickstart: comando npx configuração mcp (GitHub main) + exemplo de chamada com preferredLanguages
 Output: data-model.md, quickstart.md, diretório contracts/ com nota de ausência de endpoints
 
 ## Phase 2: Task Planning Approach
@@ -103,7 +104,7 @@ Ordering:
 6. Testes de fluxo integração (sucesso, sem legendas, idioma fallback, URL inválida, vídeo inacessível)
 7. Implementar função principal
 8. Ajustes finais e quickstart
-Estimated Output: ~20 tasks
+Estimated Output: ~20 tasks (adaptados para JS)
 
 ## Phase 3+: Future Implementation
 Fora do escopo deste comando
@@ -116,15 +117,15 @@ Fora do escopo deste comando
 - [x] Phase 0: Research complete (/plan command)
 - [x] Phase 1: Design complete (/plan command)
 - [x] Phase 2: Task planning complete (/plan command - describe approach only)
-- [ ] Phase 3: Tasks generated (/tasks command)
-- [ ] Phase 4: Implementation complete
-- [ ] Phase 5: Validation passed
+- [x] Phase 3: Tasks adaptadas para JS (implícito)
+- [x] Phase 4: Implementation complete (JS ESM + MCP server)
+- [x] Phase 5: Validation passed (node --test integração + unit)
 
 **Gate Status**:
 - [x] Initial Constitution Check: PASS
 - [x] Post-Design Constitution Check: PASS
-- [x] All NEEDS CLARIFICATION resolved (exceto versioning, tratado como 0.1.0 inicial)
-- [ ] Complexity deviations documented (none needed)
+- [x] All NEEDS CLARIFICATION resolved (versão 0.1.0)
+- [x] Complexity deviations documented (mudança para JS + retorno MCP type=text)
 
 ---
 *Based on Constitution v2.1.1 - File not present; applied baseline principles explicit in template*

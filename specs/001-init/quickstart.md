@@ -1,10 +1,15 @@
 # Quickstart: YouTube Transcript MCP Tool
 
 ## Instalação / Uso via npx
+Publicação opcional no npm (quando existir):
 ```
 npx youtube-transcript-mcp --videoUrl "https://www.youtube.com/watch?v=VIDEO_ID" --preferredLanguages "pt-BR,en"
 ```
-Retorna JSON no stdout com a lista de segmentos ou `null` em falha.
+Via GitHub (sem publicar no npm):
+```
+npx -y --package=github:lucasliet/youtube-transcript-mcp#main youtube-transcript-mcp --videoUrl "https://www.youtube.com/watch?v=VIDEO_ID" --preferredLanguages "pt-BR,en"
+```
+Saída do CLI: JSON no stdout (array de segmentos) ou `null` em falha.
 
 ## Registro da Ferramenta no MCP Host
 Exemplo de configuração (pseudo JSON):
@@ -44,6 +49,9 @@ Coloque no arquivo de configuração do host MCP:
 ```
 Este servidor utiliza `@modelcontextprotocol/sdk` e comunica via stdio.
 
+Formato de retorno (MCP):
+- O handler `tools/call` retorna `content` com `type: "text"` contendo o JSON serializado do array de segmentos.
+
 ## Chamada
 Entrada:
 ```
@@ -53,11 +61,20 @@ Entrada:
 }
 ```
 Saída (exemplo abreviado):
+CLI:
 ```
 [
   { "text": "Intro...", "startInMs": 0, "duration": 2300 },
   { "text": "Next segment...", "startInMs": 2300, "duration": 1800 }
 ]
+```
+MCP (content type text):
+```
+{
+  "content": [
+    { "type": "text", "text": "[{\"text\":\"Intro...\",\"startInMs\":0,\"duration\":2300}]" }
+  ]
+}
 ```
 
 ## Regras de Seleção de Legenda

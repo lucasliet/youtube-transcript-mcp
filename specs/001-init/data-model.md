@@ -1,4 +1,4 @@
-# Data Model: YouTube Transcript MCP Tool
+# Data Model: YouTube Transcript MCP Tool (Final)
 
 ## Entities
 
@@ -37,3 +37,7 @@ Regras:
 - no_captions → null
 - network_error → null
 - other_error → null
+
+## Contract Notes (MCP vs CLI)
+- CLI: imprime JSON direto (array de TranscriptSegment) no stdout.
+- MCP: handler de tools/call retorna `content` do tipo `text` contendo o JSON serializado do array de TranscriptSegment (conforme schemas suportados pelo SDK).

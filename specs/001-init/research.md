@@ -5,8 +5,10 @@
 - Sem truncamento: consumidor controla (Spec FR-022 substituída pela nova definição de não truncar)
 - Logging categorizado: invalid_url, no_captions, inaccessible, network_error, other_error
 - Fallback idioma: comparação case-insensitive + prefixo
-- Parser XML: fast-xml-parser adequado por simplicidade
-- Test framework: usar node:test nativo para zero dependências adicionais (reduz complexidade) em vez de Jest
+- Parser XML: regex-based mínimo (sem dependências)
+- Test framework: node:test nativo (sem Jest)
+- MCP server: @modelcontextprotocol/sdk; handlers usando ListToolsRequestSchema e CallToolRequestSchema; content type retornado: text
+- Distribuição: npx via GitHub (branch main); sem build; JavaScript ESM puro
 - Versionamento: iniciar em 0.1.0; incremento semântica manual
 
 ## Rationale
@@ -21,7 +23,7 @@
 | Uso de Jest | Dependência adicional não estritamente necessária |
 | Truncar longas transcrições | Viola requisito de retorno completo definido na spec |
 | Normalização avançada (HTML entities) | Aumenta complexidade sem requisito explícito |
-| Suporte múltiplos parsers XML | Desnecessário, fast-xml-parser atende |
+| fast-xml-parser | Dependência desnecessária; regex atende aos formatos suportados |
 
 ## Open Items Resolved
 - NEEDS CLARIFICATION removidos na spec foram consolidados nas decisões acima

@@ -56,3 +56,5 @@ npm test
 - Sem truncamento de resposta
 - Erros retornam `null`; logs categorizados
 - Seleção de idioma com prioridade e fallback
+ - Servidor MCP usando @modelcontextprotocol/sdk; tools/list e tools/call com schemas do SDK
+ - Retorno do tools/call no MCP é `content` type `text` com JSON serializado dos segmentos
