@@ -55,10 +55,23 @@ export async function transcriptYt(args) {
       logError('no_captions', 'no_suitable_track_found')
       return null
     }
-    const xml = await fetch(picked.url, { headers: { 'Accept-Language': 'en-US' } }).then((r) => {
-      if (!r.ok) throw new Error(`yt_request_failed_${r.status}`)
-      return r.text()
-    })
+    let xml
+    {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
+      try {
+        const r = await fetch(picked.url, { headers: { 'Accept-Language': 'en-US' }, signal: controller.signal })
+        if (!r.ok) throw new Error(`yt_request_failed_${r.status}`)
+        xml = await r.text()
+      } catch (e) {
+        const name = e && typeof e.name === 'string' ? e.name : ''
+        const msg = e && typeof e.message === 'string' ? e.message : ''
+        if (name === 'AbortError' || msg.includes('aborted')) throw new Error('yt_request_failed_timeout')
+        throw e
+      } finally {
+        clearTimeout(timeoutId)
+      }
+    }
     const segments = normalizeSegments(parseSegments(xml))
     if (!segments.length) {
       logError('no_captions', 'no_segments_after_parsing')
