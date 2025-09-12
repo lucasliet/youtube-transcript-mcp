@@ -36,3 +36,6 @@
 - Resposta MCP deve usar `content` com `type: "text"` contendo JSON serializado.
 - Sem cache e sem truncamento: o consumidor decide paginação/tratamento.
 - Requer Node 18+ com `fetch` nativo.
+
+## Manutenção do AGENTS.md
+- Sempre que, durante a implementação, alguma instrução do projeto aqui documentada mudar, atualize este AGENTS.md para refletir as instruções atualizadas.

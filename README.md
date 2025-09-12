@@ -1,15 +1,38 @@
 # YouTube Transcript MCP Tool
 
-Ferramenta MCP para obter transcrições de vídeos do YouTube com timestamps e fornecer para agentes LLM. Equivalente funcional ao comportamento de `example.ts`.
+Ferramenta MCP para obter transcrições de vídeos do YouTube com timestamps e fornecer para agentes LLM.
 
-## Uso via npx
+## Instalação / Uso via npx
+Via GitHub:
 ```
-npx youtube-transcript-mcp --videoUrl "https://www.youtube.com/watch?v=VIDEO_ID" --preferredLanguages "pt-BR,en"
+npx -y --package=github:lucasliet/youtube-transcript-mcp#main youtube-transcript-mcp --videoUrl "https://www.youtube.com/watch?v=VIDEO_ID" --preferredLanguages "pt-BR,en"
 ```
-Retorna JSON no stdout com a lista de segmentos ou `null` em falha.
+Saída do CLI: JSON no stdout (array de segmentos) ou `null` em falha.
 
-## Configuração MCP (exemplo)
-No host MCP (ex: Claude Desktop / MCP compatível):
+## Registro da Ferramenta no MCP Host
+Exemplo de configuração (pseudo JSON):
+```
+{
+  "tools": [
+    {
+      "name": "transcript_yt",
+      "args": {
+        "videoUrl": "https://www.youtube.com/watch?v=VIDEO_ID",
+        "preferredLanguages": ["pt-BR", "en"]
+      }
+    }
+  ]
+}
+```
+
+Uso programático (import do pacote):
+```
+import tools from 'youtube-transcript-mcp'
+```
+`tools` é um array contendo a ferramenta `transcript_yt` pronta para registro no host MCP.
+
+## Configuração como MCP Server
+Coloque no arquivo de configuração do host MCP:
 ```
 {
   "mcpServers": {
@@ -21,27 +44,60 @@ No host MCP (ex: Claude Desktop / MCP compatível):
   }
 }
 ```
+Este servidor utiliza `@modelcontextprotocol/sdk` e comunica via stdio.
 
-## Integração MCP (programática)
+Formato de retorno (MCP):
+- O handler `tools/call` retorna `content` com `type: "text"` contendo o JSON serializado do array de segmentos.
+
+## Chamada
+Entrada:
 ```
-import tools from 'youtube-transcript-mcp'
+{
+  "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "preferredLanguages": ["pt-BR", "en"]
+}
 ```
-`tools` é um array com a ferramenta `transcript_yt` pronta para registro no host MCP.
+Saída (exemplo abreviado)
+CLI:
+```
+[
+  { "text": "Intro...", "startInMs": 0, "duration": 2300 },
+  { "text": "Next segment...", "startInMs": 2300, "duration": 1800 }
+]
+```
+MCP (content type text):
+```
+{
+  "content": [
+    { "type": "text", "text": "[{\"text\":\"Intro...\",\"startInMs\":0,\"duration\":2300}]" }
+  ]
+}
+```
+
+## Regras de Seleção de Legenda
+Prioridade: manual idioma preferido > automática idioma preferido > track padrão > primeira disponível.
+Matching de idioma: case-insensitive + prefixo ("pt" casa "pt-BR").
+
+## Comportamento de Erro
+Retorna `null` em qualquer falha. Logs internos categorizam causa.
+
+## Limitações
+- Sem cache interno
+- Sem truncamento de resposta
+- Sem persistência em disco
 
 ## Desenvolvimento
 - Node 18+
-- TypeScript
+- JavaScript ESM
 
 Scripts:
 ```
-npm run build
 npm test
+npm run lint
 ```
 
-## Garantias de Projeto
-- Sem cache interno
-- Sem truncamento de resposta
-- Erros retornam `null`; logs categorizados
-- Seleção de idioma com prioridade e fallback
- - Servidor MCP usando @modelcontextprotocol/sdk; tools/list e tools/call com schemas do SDK
- - Retorno do tools/call no MCP é `content` type `text` com JSON serializado dos segmentos
+## Testes Esperados
+- URL inválida → `null`
+- Sem legendas → `null`
+- Fallback automático de idioma funciona
+- Parsing de dois formatos XML suportados
