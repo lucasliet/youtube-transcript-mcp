@@ -9,10 +9,23 @@ import { normalizeSegments } from '../lib/normalizeSegments.js'
 import { logError } from '../lib/log.js'
 
 /**
+ * @typedef {object} TranscriptYtArgs
+ * @property {string} videoUrl Full YouTube video URL.
+ * @property {string[]} [preferredLanguages] Optional ordered language codes preference, e.g., ['pt-BR','en'].
+ */
+
+/**
+ * @typedef {object} TranscriptSegment
+ * @property {string} text The caption text content.
+ * @property {number} startInMs Segment start time in milliseconds.
+ * @property {number} duration Segment duration in milliseconds.
+ */
+
+/**
  * Retrieves YouTube transcript segments from a video URL.
  * Returns null on any failure; logs categorized errors.
- * @param args The request payload with videoUrl and optional preferredLanguages.
- * @returns A list of transcript segments or null when unavailable.
+ * @param {TranscriptYtArgs} args The request payload with videoUrl and optional preferredLanguages.
+ * @returns {Promise<TranscriptSegment[] | null>} A list of transcript segments or null when unavailable.
  */
 export async function transcriptYt(args) {
   try {
@@ -79,6 +92,7 @@ export const tool = ['transcript_yt', {
       strict: true
     }
   },
+  /** @type {(args: TranscriptYtArgs) => Promise<ReturnType<typeof transcriptYt>>} */
   fn: async (args) => transcriptYt(args)
 }]
 

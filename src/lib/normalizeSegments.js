@@ -1,9 +1,14 @@
- 
+/**
+ * @typedef {object} TranscriptSegment
+ * @property {string} text The caption text content.
+ * @property {number} startInMs Segment start time in milliseconds.
+ * @property {number} duration Segment duration in milliseconds.
+ */
 
 /**
  * Normalizes, deduplicates and sorts segments by start time.
- * @param items The raw segments list.
- * @returns Cleaned segment list.
+ * @param {TranscriptSegment[]} items The raw segments list.
+ * @returns {TranscriptSegment[]} Cleaned segment list.
  */
 export function normalizeSegments(items) {
   const seen = new Set()

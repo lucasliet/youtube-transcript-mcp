@@ -1,10 +1,16 @@
- 
+
+/**
+ * @typedef {object} TranscriptSegment
+ * @property {string} text The caption text content.
+ * @property {number} startInMs Segment start time in milliseconds.
+ * @property {number} duration Segment duration in milliseconds.
+ */
 
 /**
  * Parses YouTube caption XML into normalized segments.
  * Supports <transcript><text> and <timedtext><body><p> formats.
- * @param xml The caption XML content.
- * @returns The list of normalized segments.
+ * @param {string} xml The caption XML content.
+ * @returns {TranscriptSegment[]} The list of normalized segments.
  */
 export function parseSegments(xml) {
   const t1 = parseTranscriptTexts(xml)
@@ -14,8 +20,8 @@ export function parseSegments(xml) {
 
 /**
  * Parses the <transcript><text> format.
- * @param xml The XML content.
- * @returns Segments list.
+ * @param {string} xml The XML content.
+ * @returns {TranscriptSegment[]} Segments list.
  */
 export function parseTranscriptTexts(xml) {
   const out = []
@@ -33,8 +39,8 @@ export function parseTranscriptTexts(xml) {
 
 /**
  * Parses the <timedtext><body><p> format.
- * @param xml The XML content.
- * @returns Segments list.
+ * @param {string} xml The XML content.
+ * @returns {TranscriptSegment[]} Segments list.
  */
 export function parseTimedtext(xml) {
   const out = []
@@ -53,8 +59,8 @@ export function parseTimedtext(xml) {
 
 /**
  * Decodes a subset of HTML entities found in captions.
- * @param s Input string.
- * @returns Decoded string.
+ * @param {string} s Input string.
+ * @returns {string} Decoded string.
  */
 export function decodeHtml(s) {
   return s
