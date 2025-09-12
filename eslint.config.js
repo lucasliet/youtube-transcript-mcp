@@ -7,5 +7,11 @@ export default [
       quotes: ['error', 'single', { avoidEscape: true }],
       indent: ['error', 2]
     }
+  },
+  {
+    files: ['tests/**/*.js'],
+    languageOptions: {
+      globals: { fetch: 'readonly', Response: 'readonly' }
+    }
   }
 ]

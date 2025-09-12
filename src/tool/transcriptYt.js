@@ -43,7 +43,7 @@ export async function transcriptYt(args) {
       return null
     }
     const xml = await fetch(picked.url, { headers: { 'Accept-Language': 'en-US' } }).then((r) => {
-      if (!r.ok) throw new Error(String(r.status))
+      if (!r.ok) throw new Error(`yt_request_failed_${r.status}`)
       return r.text()
     })
     const segments = normalizeSegments(parseSegments(xml))
@@ -53,10 +53,10 @@ export async function transcriptYt(args) {
     }
     return segments
   } catch (err) {
-    const msg = String(err?.message || '')
+    const msg = typeof err?.message === 'string' ? err.message : ''
     if (msg.includes('yt_request_failed_') || msg === 'ip_blocked') logError('network_error', msg)
     else if (msg === 'video_unavailable' || msg === 'video_unplayable' || msg === 'age_restricted' || msg === 'request_blocked') logError('inaccessible', msg)
-    else logError('other_error', 'unexpected_error')
+    else logError('other_error', msg || 'unexpected_error')
     return null
   }
 }
