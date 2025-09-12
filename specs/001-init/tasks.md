@@ -56,7 +56,6 @@ Refer to template; tasks customized para este feature.
 - [ ] T036 [P] Revisar mensagens de log para consistência
 - [ ] T037 [P] Checar performance em vídeo longo simulado (mock grande) garantindo não truncamento
 - [x] T039 Verificar versão 0.1.0 em package.json
-- [ ] T040 [P] Preparar changelog inicial CHANGELOG.md (entrada 0.1.0)
 
 ## Dependencies
 - T006-T017 antes de T018-T028
