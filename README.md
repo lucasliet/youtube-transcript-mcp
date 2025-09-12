@@ -1,39 +1,96 @@
 # YouTube Transcript MCP Tool
 
+[![Run tests](https://github.com/lucasliet/youtube-transcript-mcp/actions/workflows/run-tests.yml/badge.svg?branch=main)](https://github.com/lucasliet/youtube-transcript-mcp/actions/workflows/run-tests.yml)
+
 Ferramenta MCP para obter transcrições de vídeos do YouTube com timestamps e fornecer para agentes LLM.
+
+## Índice
+- [Instalação / Uso via npx](#instalação--uso-via-npx)
+- [Instalação como biblioteca](#instalação-como-biblioteca-npm-via-github)
+- [Compatível com OpenAI SDK (Chat Completions Tools)](#compatível-com-openai-sdk-chat-completions-tools)
+- [Configuração como MCP Server](#configuração-como-mcp-server)
+- [Formato de entrada e saída](#formato-de-entrade-e-saída)
+- [Regras de Seleção de Legenda](#regras-de-seleção-de-legenda)
+- [Comportamento de Erro](#comportamento-de-erro)
+- [Limitações](#limitações)
+- [Desenvolvimento](#desenvolvimento)
+- [Testes Esperados](#testes-esperados)
 
 ## Instalação / Uso via npx
 Via GitHub:
-```
+```bash
 npx -y --package=github:lucasliet/youtube-transcript-mcp#main youtube-transcript-mcp --videoUrl "https://www.youtube.com/watch?v=VIDEO_ID" --preferredLanguages "pt-BR,en"
 ```
 Saída do CLI: JSON no stdout (array de segmentos) ou `null` em falha.
 
-## Registro da Ferramenta no MCP Host
-Exemplo de configuração (pseudo JSON):
+## Instalação como biblioteca (npm via GitHub)
+Como o pacote não está publicado no npm, instale diretamente do GitHub:
+```bash
+npm i github:lucasliet/youtube-transcript-mcp#main
 ```
-{
-  "tools": [
-    {
-      "name": "transcript_yt",
-      "args": {
-        "videoUrl": "https://www.youtube.com/watch?v=VIDEO_ID",
-        "preferredLanguages": ["pt-BR", "en"]
-      }
-    }
-  ]
+Import ESM:
+```js
+import tools from 'youtube-transcript-mcp'
+```
+`tools` é um array onde cada item é uma tupla `[name, { schema, fn }]`. O `schema` está pronto para ser passado ao `tools` da API do OpenAI, e `fn(args)` executa a ferramenta e retorna os segmentos.
+
+## Compatível com OpenAI SDK (Chat Completions Tools)
+Esta biblioteca já expõe a ferramenta no formato de schema esperado pelo OpenAI SDK para a API de Chat Completions (tools do tipo function). Você pode reaproveitar o schema diretamente e despachar a execução pelo `fn` exportado.
+
+Exemplo de uso com `openai` (Node ESM):
+```js
+import OpenAI from 'openai'
+import ytTools from 'youtube-transcript-mcp'
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+
+// Extrai os schemas de tools no formato esperado pela API do OpenAI
+const openaiTools = ytTools.map(([, t]) => t.schema)
+
+const messages = [
+  { role: 'user', content: 'Get transcript for https://www.youtube.com/watch?v=dQw4w9WgXcQ' }
+]
+
+const res = await openai.chat.completions.create({
+  model: 'gpt-4o-mini',
+  messages,
+  tools: openaiTools
+})
+
+// Se o modelo pediu chamada de ferramenta, resolva e mantenha o histórico
+if (res.choices?.[0]?.message?.tool_calls) {
+  messages.push({
+    role: 'assistant',
+    content: res.choices[0].message.content || '',
+    tool_calls: res.choices[0].message.tool_calls
+  })
+
+  for (const tool_call of res.choices[0].message.tool_calls) {
+    const fnName = tool_call.function?.name
+    const args = JSON.parse(tool_call.function?.arguments || '{}')
+    const entry = ytTools.find(([n]) => n === fnName)
+    if (!entry) continue
+    const fn = entry[1].fn
+    const result = await fn(args)
+    messages.push({
+      role: 'tool',
+      tool_call_id: tool_call.id,
+      content: JSON.stringify(result)
+    })
+  }
+
+  // Opcional: Faça uma chamada de follow-up com o histórico atualizado
+  const followUpRes = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages
+  })
+  console.log(followUpRes.choices[0].message.content)
 }
 ```
 
-Uso programático (import do pacote):
-```
-import tools from 'youtube-transcript-mcp'
-```
-`tools` é um array contendo a ferramenta `transcript_yt` pronta para registro no host MCP.
-
 ## Configuração como MCP Server
 Coloque no arquivo de configuração do host MCP:
-```
+```json
 {
   "mcpServers": {
     "youtube-transcript": {
@@ -49,9 +106,9 @@ Este servidor utiliza `@modelcontextprotocol/sdk` e comunica via stdio.
 Formato de retorno (MCP):
 - O handler `tools/call` retorna `content` com `type: "text"` contendo o JSON serializado do array de segmentos.
 
-## Chamada
+## Formato de entrade e saída
 Entrada:
-```
+```json
 {
   "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   "preferredLanguages": ["pt-BR", "en"]
@@ -59,14 +116,14 @@ Entrada:
 ```
 Saída (exemplo abreviado)
 CLI:
-```
+```json
 [
   { "text": "Intro...", "startInMs": 0, "duration": 2300 },
   { "text": "Next segment...", "startInMs": 2300, "duration": 1800 }
 ]
 ```
 MCP (content type text):
-```
+```json
 {
   "content": [
     { "type": "text", "text": "[{\"text\":\"Intro...\",\"startInMs\":0,\"duration\":2300}]" }
@@ -91,7 +148,7 @@ Retorna `null` em qualquer falha. Logs internos categorizam causa.
 - JavaScript ESM
 
 Scripts:
-```
+```bash
 npm test
 npm run lint
 ```
