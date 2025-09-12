@@ -22,19 +22,6 @@ No host MCP (ex: Claude Desktop / MCP compatível):
 }
 ```
 
-Alternativa (quando publicado no npm):
-```
-{
-  "mcpServers": {
-    "youtube-transcript": {
-      "command": "npx",
-      "args": ["-y", "youtube-transcript-mcp"],
-      "env": {}
-    }
-  }
-}
-```
-
 ## Integração MCP (programática)
 ```
 import tools from 'youtube-transcript-mcp'
