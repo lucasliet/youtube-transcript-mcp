@@ -3,6 +3,8 @@ import { transcriptYt } from './tool/transcriptYt.js'
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
+import { parseCliConfig } from './server/config.js'
+import { startRemoteServer } from './server/remoteServer.js'
 
 /**
  * CLI/MCP entrypoint. If --videoUrl is provided, runs a one-off fetch and prints JSON.
@@ -10,6 +12,11 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
  */
 async function main() {
   const args = parseArgs(process.argv.slice(2))
+  const config = parseCliConfig(args)
+  if (config.mode === 'remote') {
+    await startRemoteMode(config)
+    return
+  }
   if (args.videoUrl) {
     const preferredLanguages = args.preferredLanguages ? String(args.preferredLanguages).split(',').map((s) => s.trim()).filter(Boolean) : undefined
     const res = await transcriptYt({ videoUrl: String(args.videoUrl), preferredLanguages })
@@ -68,6 +75,23 @@ async function startMcpServer() {
 
   const transport = new StdioServerTransport()
   await server.connect(transport)
+}
+
+async function startRemoteMode(config) {
+  const server = await startRemoteServer({
+    port: config.port,
+    host: config.host,
+    cors: config.cors,
+    heartbeatIntervalMs: config.heartbeatIntervalMs,
+    requestTimeoutMs: config.requestTimeoutMs,
+    maxClients: config.maxClients
+  })
+  const shutdown = async () => {
+    await server.close()
+    process.exit(0)
+  }
+  process.on('SIGINT', shutdown)
+  process.on('SIGTERM', shutdown)
 }
 
 /**
