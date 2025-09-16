@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Remote MCP JSON-RPC Contracts",
+  "description": "JSON-RPC 2.0 frames handled by the remote MCP server",
+  "definitions": {
+    "Identifier": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "null" }
+      ]
+    },
+    "MCPRequest": {
+      "type": "object",
+      "properties": {
+        "jsonrpc": {
+          "const": "2.0"
+        },
+        "method": {
+          "type": "string"
+        },
+        "params": {
+          "type": "object"
+        },
+        "id": {
+          "$ref": "#/definitions/Identifier"
+        }
+      },
+      "required": ["jsonrpc", "method", "id"],
+      "additionalProperties": false
+    },
+    "MCPResponse": {
+      "type": "object",
+      "properties": {
+        "jsonrpc": {
+          "const": "2.0"
+        },
+        "result": {},
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "integer" },
+            "message": { "type": "string" },
+            "data": {}
+          },
+          "required": ["code", "message"],
+          "additionalProperties": true
+        },
+        "id": {
+          "$ref": "#/definitions/Identifier"
+        }
+      },
+      "required": ["jsonrpc", "id"],
+      "oneOf": [
+        { "required": ["result"] },
+        { "required": ["error"] }
+      ],
+      "additionalProperties": false
+    },
+    "ToolsListRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/MCPRequest" },
+        {
+          "properties": {
+            "method": { "const": "tools/list" },
+            "params": {
+              "type": "object",
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "ToolCallRequest": {
+      "allOf": [
+        { "$ref": "#/definitions/MCPRequest" },
+        {
+          "properties": {
+            "method": { "const": "tools/call" },
+            "params": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "const": "transcript_yt"
+                },
+                "arguments": {
+                  "type": "object",
+                  "properties": {
+                    "videoUrl": {
+                      "type": "string"
+                    },
+                    "preferredLanguages": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  },
+                  "required": ["videoUrl"],
+                  "additionalProperties": false
+                }
+              },
+              "required": ["name", "arguments"],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    }
+  },
+  "anyOf": [
+    { "$ref": "#/definitions/MCPRequest" },
+    { "$ref": "#/definitions/MCPResponse" },
+    { "$ref": "#/definitions/ToolsListRequest" },
+    { "$ref": "#/definitions/ToolCallRequest" }
+  ]
+}

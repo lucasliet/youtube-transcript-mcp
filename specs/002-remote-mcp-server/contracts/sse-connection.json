@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Remote MCP SSE Connection",
+  "description": "Handshake and event framing for GET /mcp/events",
+  "definitions": {
+    "Request": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "const": "GET"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^/mcp/events$"
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "accept": {
+              "type": "string",
+              "pattern": "text/event-stream"
+            },
+            "cache-control": {
+              "type": "string",
+              "pattern": "no-cache"
+            }
+          },
+          "required": ["accept"],
+          "additionalProperties": true
+        }
+      },
+      "required": ["method", "path", "headers"],
+      "additionalProperties": true
+    },
+    "Response": {
+      "type": "object",
+      "properties": {
+        "statusCode": {
+          "const": 200
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "content-type": {
+              "const": "text/event-stream"
+            },
+            "cache-control": {
+              "const": "no-cache"
+            },
+            "connection": {
+              "const": "keep-alive"
+            },
+            "access-control-allow-origin": {
+              "type": "string"
+            }
+          },
+          "required": ["content-type", "cache-control", "connection"],
+          "additionalProperties": true
+        }
+      },
+      "required": ["statusCode", "headers"],
+      "additionalProperties": true
+    },
+    "ReadyEvent": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "const": "ready"
+        },
+        "data": {
+          "type": "string",
+          "description": "JSON payload with connection metadata"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": ["event", "data"],
+      "additionalProperties": false
+    },
+    "MessageEvent": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "const": "message"
+        },
+        "data": {
+          "type": "string",
+          "description": "JSON containing connectionId, requestId, and MCP response"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": ["event", "data"],
+      "additionalProperties": false
+    },
+    "ErrorEvent": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "const": "error"
+        },
+        "data": {
+          "type": "string",
+          "description": "JSON encoded error payload",
+          "contentMediaType": "application/json"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": ["event", "data"],
+      "additionalProperties": false
+    },
+    "HeartbeatEvent": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "const": "heartbeat"
+        },
+        "data": {
+          "type": "string",
+          "description": "JSON with connectionId and timestamp"
+        }
+      },
+      "required": ["event", "data"],
+      "additionalProperties": false
+    }
+  },
+  "anyOf": [
+    { "$ref": "#/definitions/Request" },
+    { "$ref": "#/definitions/Response" },
+    { "$ref": "#/definitions/ReadyEvent" },
+    { "$ref": "#/definitions/MessageEvent" },
+    { "$ref": "#/definitions/ErrorEvent" },
+    { "$ref": "#/definitions/HeartbeatEvent" }
+  ]
+}

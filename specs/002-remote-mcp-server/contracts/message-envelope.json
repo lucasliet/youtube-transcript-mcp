@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Remote MCP Message Envelope",
+  "description": "HTTP payload accepted by POST /mcp/messages",
+  "type": "object",
+  "properties": {
+    "connectionId": {
+      "type": "string",
+      "description": "Identifier assigned during SSE handshake",
+      "minLength": 1
+    },
+    "message": {
+      "$ref": "./mcp-request-response.json#/definitions/MCPRequest"
+    }
+  },
+  "required": ["connectionId", "message"],
+  "additionalProperties": false
+}
