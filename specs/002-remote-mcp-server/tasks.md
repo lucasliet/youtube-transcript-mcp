@@ -48,19 +48,19 @@
 - [ ] T023 Implement instrumentation/log routing for remote mode using existing logging utilities in `/Users/lucas/Projetos/youtube-transcript-mcp/src/server/logging.js`, ensuring categorical logs align with stdio taxonomy.
 
 ## Phase 3.5: Polish
-- [ ] T024 [P] Update documentation (`/Users/lucas/Projetos/youtube-transcript-mcp/README.md` and `/Users/lucas/Projetos/youtube-transcript-mcp/specs/002-remote-mcp-server/quickstart.md` if needed) to reflect remote usage and configuration flags.
-- [ ] T025 [P] Replace placeholder constitution with actual project principles in `/Users/lucas/Projetos/youtube-transcript-mcp/memory/constitution.md` based on implemented practices.
-- [ ] T026 Run full validation (`npm test`, `npm run lint`) and capture results in change notes.
+- [ ] T024 [P] Update documentation to reflect remote mode (refresh `/Users/lucas/Projetos/youtube-transcript-mcp/README.md`, `/Users/lucas/Projetos/youtube-transcript-mcp/specs/002-remote-mcp-server/quickstart.md`, e `/Users/lucas/Projetos/youtube-transcript-mcp/AGENTS.md` com a nova estrutura e comandos).
+- [ ] T025 [P] Replace placeholder constitution with actual project principles em `/Users/lucas/Projetos/youtube-transcript-mcp/memory/constitution.md` alinhando com as práticas vigentes.
+- [ ] T026 Run full validation (`npm test`, `npm run lint`) e registrar resultados nas notas de mudança.
 
 ## Dependencies & Ordering Notes
 - T001 sets up helpers required by contract and integration tests.
-- T002–T011 must precede T012–T021 to enforce RED → GREEN.
-- T012–T016 create entities used by T017–T021; implement them before dependent tasks.
-- T018 depends on session registry (T017); T019 depends on RequestState and ErrorFrame (T013–T015).
-- T020 depends on handlers (T018–T019); T021 wires CLI after remote server bootstrap exists.
-- T022 requires core modules working; executes after T021.
-- T023 builds on logging present in remote server; schedule after T020.
-- T024–T026 execute last after functionality stabilises.
+- T002–T011 must precede T012–T021 para reforçar RED → GREEN.
+- T012–T016 criam entidades usadas por T017–T021; implementar antes das dependentes.
+- T018 depende do registry (T017); T019 depende de RequestState e ErrorFrame (T013–T015).
+- T020 depende dos handlers (T018–T019); T021 ajusta CLI após bootstrap remoto.
+- T022 requer módulos principais concluídos; roda após T021.
+- T023 depende de logging estrutural presente (T020).
+- T024–T026 executam ao final após estabilidade funcional.
 
 ## Parallel Execution Example
 ```
@@ -74,7 +74,7 @@ Task: "T005 Author contract test for error propagation with /Users/lucas/Projeto
 ## Validation Checklist
 - [x] Every contract file mapped to a contract test task (T002–T005).
 - [x] Every data-model entity mapped to a creation task (T012–T016).
-- [x] All endpoints (`GET /mcp/events`, `POST /mcp/messages`) covered by implementation tasks (T018–T020) after tests.
-- [x] User stories represented by integration tests (T006–T011).
-- [x] Documentation and constitution updates scheduled post-implementation (T024–T025).
-- [x] Final validation task ensures lint/tests executed (T026).
+- [x] All endpoints cobrindo `GET /mcp/events` e `POST /mcp/messages` via T018–T020 depois dos testes.
+- [x] User stories representadas por testes de integração (T006–T011).
+- [x] Documentação (README, quickstart, AGENTS) e constitution updates agendados (T024–T025).
+- [x] Validação final garante lint e testes executados (T026).
