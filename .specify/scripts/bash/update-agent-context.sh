@@ -23,7 +23,7 @@ echo "=== Updating agent context files for feature $CURRENT_BRANCH ==="
 
 extract_field() {
   local label="$1"
-  grep "^**$label**: " "$PLAN_FILE" 2>/dev/null | head -1 | sed "s/^**$label**: //"
+  awk -v lbl="$label" 'match($0, "^\\*\\*" lbl "\\*\\*: ") { print substr($0, RLENGTH + 1); exit }' "$PLAN_FILE"
 }
 
 NEW_LANG=$(extract_field "Language/Version" | grep -v "NEEDS CLARIFICATION" || echo "")
@@ -38,6 +38,11 @@ export REPO_ROOT CURRENT_BRANCH NEW_LANG NEW_FRAMEWORK NEW_DB NEW_PROJECT_TYPE P
 update_agent_file() {
   local target_file="$1"
   local agent_name="$2"
+  local create_if_missing="$3"
+  if [ ! -f "$target_file" ] && [ "$create_if_missing" != "true" ]; then
+    echo "Skipping $agent_name context file (not present)"
+    return
+  fi
   mkdir -p "$(dirname "$target_file")"
   python3 - "$target_file" <<'PY'
 import os, sys, pathlib, datetime, re
@@ -127,20 +132,32 @@ summary = os.environ.get('PLAN_SUMMARY', '').strip() or f'Documentos da feature 
 if not branch:
     sys.exit(0)
 summary_line = f"- `specs/{branch}/*`: {summary}"
-if summary_line in content:
+pattern = r'(## Project Structure & Module Organization\n)(.*?)(\n## |\Z)'
+match = re.search(pattern, content, re.DOTALL)
+if not match:
     sys.exit(0)
+section_body = match.group(2).strip('\n')
+lines = [line for line in section_body.split('\n') if line.strip()]
+if summary_line not in lines:
+    lines.append(summary_line)
+updated_body = '\n'.join(lines) + '\n'
+content = content[:match.start(2)] + updated_body + content[match.end(2):]
+path.write_text(content)
+print('✅ AGENTS.md atualizado')
+sys.exit(0)
 pattern = r'(## Project Structure & Module Organization\n)(.*?)(\n## |\Z)'
 match = re.search(pattern, content, re.DOTALL)
 if not match:
     sys.exit(0)
 body = match.group(2).rstrip('\n')
 lines = [line for line in body.split('\n') if line]
-insert_at = len(lines)
-for idx, line in enumerate(lines):
-    if line.strip().startswith('- `specs/'):
-        insert_at = idx + 1
-lines.insert(insert_at, summary_line)
-updated_body = '\n'.join(lines) + '\n'
+injected = False
+updated_lines = []
+for line in lines:
+    updated_lines.append(line)
+if summary_line not in updated_lines:
+    updated_lines.append(summary_line)
+updated_body = '\n'.join(updated_lines) + '\n'
 content = content[:match.start(2)] + updated_body + content[match.end(2):]
 path.write_text(content)
 print('✅ AGENTS.md atualizado')
@@ -149,18 +166,15 @@ PY
 
 AGENT_TYPE="$1"
 case "$AGENT_TYPE" in
-  claude) update_agent_file "$CLAUDE_FILE" "Claude Code" ;;
-  gemini) update_agent_file "$GEMINI_FILE" "Gemini CLI" ;;
-  copilot) update_agent_file "$COPILOT_FILE" "GitHub Copilot" ;;
-  cursor) update_agent_file "$CURSOR_FILE" "Cursor IDE" ;;
+  claude) update_agent_file "$CLAUDE_FILE" "Claude Code" "true" ;;
+  gemini) update_agent_file "$GEMINI_FILE" "Gemini CLI" "true" ;;
+  copilot) update_agent_file "$COPILOT_FILE" "GitHub Copilot" "true" ;;
+  cursor) update_agent_file "$CURSOR_FILE" "Cursor IDE" "true" ;;
   "")
     [ -f "$CLAUDE_FILE" ] && update_agent_file "$CLAUDE_FILE" "Claude Code"
     [ -f "$GEMINI_FILE" ] && update_agent_file "$GEMINI_FILE" "Gemini CLI"
     [ -f "$COPILOT_FILE" ] && update_agent_file "$COPILOT_FILE" "GitHub Copilot"
     [ -f "$CURSOR_FILE" ] && update_agent_file "$CURSOR_FILE" "Cursor IDE"
-    if [ ! -f "$CLAUDE_FILE" ] && [ ! -f "$GEMINI_FILE" ] && [ ! -f "$COPILOT_FILE" ] && [ ! -f "$CURSOR_FILE" ]; then
-      update_agent_file "$CLAUDE_FILE" "Claude Code"
-    fi
     ;;
   *) echo "ERROR: Unknown agent type '$AGENT_TYPE' (expected claude|gemini|copilot|cursor)"; exit 1 ;;
 esac
