@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Lifecycle Remote Contract",
+  "type": "object",
+  "properties": {
+    "jsonrpc": { "const": "2.0" },
+    "id": { "type": ["string", "number", "null"] },
+    "method": {
+      "type": "string",
+      "enum": ["initialize", "shutdown", "exit", "tools/list", "tools/call"]
+    },
+    "params": { "type": ["object", "null"] }
+  },
+  "required": ["jsonrpc", "method"],
+  "additionalProperties": true
+}
