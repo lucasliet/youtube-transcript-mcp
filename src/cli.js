@@ -110,7 +110,7 @@ function parseArgs(argv) {
         out[k] = n
         i++
       } else {
-        out[k] = true
+        out[k] = 'true'
       }
     }
   }

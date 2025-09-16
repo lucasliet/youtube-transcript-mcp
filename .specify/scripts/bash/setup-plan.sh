@@ -8,7 +8,9 @@ eval $(get_feature_paths)
 check_feature_branch "$CURRENT_BRANCH" || exit 1
 mkdir -p "$FEATURE_DIR"
 TEMPLATE="$REPO_ROOT/.specify/templates/plan-template.md"
-[[ -f "$TEMPLATE" ]] && cp "$TEMPLATE" "$IMPL_PLAN"
+if [[ -f "$TEMPLATE" && ! -f "$IMPL_PLAN" ]]; then
+  cp "$TEMPLATE" "$IMPL_PLAN"
+fi
 if $JSON_MODE; then
   printf '{"FEATURE_SPEC":"%s","IMPL_PLAN":"%s","SPECS_DIR":"%s","BRANCH":"%s"}\n' \
     "$FEATURE_SPEC" "$IMPL_PLAN" "$FEATURE_DIR" "$CURRENT_BRANCH"
