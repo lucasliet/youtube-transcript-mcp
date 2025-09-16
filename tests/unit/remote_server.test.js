@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createServerConfig } from '../../src/server/config.js'
-import { SessionRegistry } from '../../src/server/sessionRegistry.js'
+import { SessionRegistry } from '../../src/server/session-registry.js'
 
 const noopLog = () => {}
 

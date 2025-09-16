@@ -1,9 +1,9 @@
 import http from 'node:http'
 import { once } from 'node:events'
 import { createServerConfig } from './config.js'
-import { SessionRegistry } from './sessionRegistry.js'
-import { handleEventStream } from './eventStreamHandler.js'
-import { handleMessage } from './messageRouter.js'
+import { SessionRegistry } from './session-registry.js'
+import { handleEventStream } from './event-stream-handler.js'
+import { handleMessage } from './message-router.js'
 import { logRemote } from './logging.js'
 
 export async function startRemoteServer(overrides = {}) {

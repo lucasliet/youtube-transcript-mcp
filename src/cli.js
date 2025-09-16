@@ -4,7 +4,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 import { parseCliConfig } from './server/config.js'
-import { startRemoteServer } from './server/remoteServer.js'
+import { startRemoteServer } from './server/remote-server.js'
 
 /**
  * CLI/MCP entrypoint. If --videoUrl is provided, runs a one-off fetch and prints JSON.
@@ -61,7 +61,10 @@ async function startMcpServer() {
       const name = req?.params?.name
       const args = req?.params?.arguments || {}
       if (name !== 'transcript_yt') {
-        return { content: [{ type: 'text', text: 'Tool not found' }], isError: true }
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ code: 'tool_not_found', message: 'Tool not found' }) }],
+          isError: true
+        }
       }
       const res = await transcriptYt({
         videoUrl: String(args.videoUrl || ''),
@@ -69,7 +72,10 @@ async function startMcpServer() {
       })
       return { content: [{ type: 'text', text: JSON.stringify(res) }] }
     } catch (e) {
-      return { content: [{ type: 'text', text: `Internal error: ${e?.message || e}` }], isError: true }
+      return {
+        content: [{ type: 'text', text: JSON.stringify({ code: 'internal_error', message: e?.message || String(e) }) }],
+        isError: true
+      }
     }
   })
 

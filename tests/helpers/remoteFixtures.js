@@ -5,7 +5,7 @@ import crypto from 'node:crypto'
 const DEFAULT_TIMEOUT = 5000
 
 export async function startRemoteServer(options = {}) {
-  const module = await import('../../src/server/remoteServer.js')
+  const module = await import('../../src/server/remote-server.js')
   if (!module || typeof module.startRemoteServer !== 'function') {
     throw new Error('remote server module not implemented')
   }

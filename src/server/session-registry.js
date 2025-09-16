@@ -1,4 +1,4 @@
-import { ClientSession } from './clientSession.js'
+import { ClientSession } from './client-session.js'
 
 export class SessionRegistry {
   constructor(config, logFn) {

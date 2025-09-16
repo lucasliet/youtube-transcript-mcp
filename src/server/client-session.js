@@ -1,7 +1,7 @@
 import crypto from 'node:crypto'
-import { buildOutboundEvent } from './outboundEvent.js'
-import { createErrorFrame } from './errorFrame.js'
-import { RequestState } from './requestState.js'
+import { buildOutboundEvent } from './outbound-event.js'
+import { createErrorFrame } from './error-frame.js'
+import { RequestState } from './request-state.js'
 
 export class ClientSession {
   constructor(response, config, logFn) {
