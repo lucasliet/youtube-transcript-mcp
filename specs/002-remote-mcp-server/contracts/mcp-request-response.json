@@ -107,9 +107,20 @@
     }
   },
   "anyOf": [
-    { "$ref": "#/definitions/MCPRequest" },
     { "$ref": "#/definitions/MCPResponse" },
     { "$ref": "#/definitions/ToolsListRequest" },
-    { "$ref": "#/definitions/ToolCallRequest" }
+    { "$ref": "#/definitions/ToolCallRequest" },
+    {
+      "allOf": [
+        { "$ref": "#/definitions/MCPRequest" },
+        {
+          "not": {
+            "properties": {
+              "method": { "enum": ["tools/list", "tools/call"] }
+            }
+          }
+        }
+      ]
+    }
   ]
 }

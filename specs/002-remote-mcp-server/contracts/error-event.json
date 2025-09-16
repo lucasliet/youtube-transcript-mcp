@@ -17,10 +17,12 @@
       "enum": [
         "invalid_request",
         "unauthorised",
+        "unauthorized",
         "not_found",
         "timeout",
         "tool_error",
-        "server_error"
+        "server_error",
+        "server_busy"
       ]
     },
     "message": {

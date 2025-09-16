@@ -122,6 +122,9 @@
         "data": {
           "type": "string",
           "description": "JSON with connectionId and timestamp"
+        },
+        "id": {
+          "type": "string"
         }
       },
       "required": ["event", "data"],

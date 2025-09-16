@@ -1,50 +1,37 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# YouTube Transcript MCP Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Entrega de uma única ferramenta
+O pacote deve continuar focado na ferramenta `transcript_yt`, preservando contrato, argumentos e formato de resposta. Novas funcionalidades só são aceitas quando estendem a experiência dessa ferramenta (ex.: transporte remoto) sem fragmentar o produto em múltiplas APIs.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Simplicidade operacional
+Implementações priorizam dependências nativas do Node.js 18+, evitando frameworks adicionais. Arquiteturas novas precisam caber no mesmo processo do CLI e manter a paridade entre os modos stdio e remoto, reutilizando módulos existentes sempre que possível.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Testes como gate de qualidade
+Toda alteração significativa começa por testes automatizados (contratos, integração e unidade) que reproduzem o cenário alvo. Somente após observar o RED é permitido implementar. Regressões no stdio são tratadas com prioridade máxima.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Observabilidade enxuta
+Logs devem ser categorizados (`invalid_request`, `tool_error`, etc.), com mensagens curtas e sem dados pessoais. Métricas externas ficam a cargo do operador; o projeto limita-se a fornecer hooks de log e códigos de erro consistentes.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Segurança e privacidade pragmáticas
+Nenhum segredo é armazenado ou versionado. Configurações sensíveis são lidas via variáveis de ambiente ou argumentos. O servidor remoto deve respeitar CORS configurável, evitar vazamento de dados do YouTube e seguir tempos limite para impedir abuso.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Diretrizes operacionais
+- Suporte obrigatório a Node.js 18 ou superior.
+- Dependências extras só com justificativa de tamanho/tempo; preferir soluções nativas.
+- Documentação (README, quickstart, AGENTS) precisa acompanhar toda nova superfície pública.
+- JSON é o formato canônico de troca; respostas MCP usam `content` com `type: "text"` serializado.
+- Flags de CLI devem aceitar override por string, booleano e número, com validação rígida.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Fluxo de desenvolvimento
+1. Ler a especificação ativa e atualizar `plan.md`/`tasks.md` conforme necessário.
+2. Criar ou ajustar testes cobrindo o comportamento desejado.
+3. Implementar a menor mudança que satisfaça os testes mantendo simplicidade.
+4. Rodar `npm test` e `npm run lint` antes de solicitar revisão.
+5. Registrar notas de mudança e atualizar documentos afetados.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+Esta constituição rege todas as PRs do repositório. Alterações devem ser documentadas neste arquivo com versão e data atualizadas. Revisores bloqueiam mudanças que violem os princípios acima ou que não comprovem testes e documentação atualizados.
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2025-09-30 | **Last Amended**: 2025-09-30

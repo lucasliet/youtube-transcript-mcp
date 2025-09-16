@@ -8,6 +8,12 @@ const DEFAULTS = {
   maxClients: 10
 }
 
+function toNumber(value) {
+  if (value === undefined || value === null || value === '') return undefined
+  const n = Number(value)
+  return Number.isFinite(n) ? n : undefined
+}
+
 export function createServerConfig(overrides = {}) {
   const config = { ...DEFAULTS, ...normalizeOverrides(overrides) }
   validateConfig(config)
@@ -17,22 +23,37 @@ export function createServerConfig(overrides = {}) {
 export function parseCliConfig(flags) {
   const overrides = {}
   if (flags.mode) overrides.mode = String(flags.mode)
-  if (flags.port !== undefined) overrides.port = Number(flags.port)
+  const port = toNumber(flags.port)
+  if (port !== undefined) overrides.port = port
   if (flags.host) overrides.host = String(flags.host)
-  if (flags.cors) overrides.cors = flags.cors === 'true' ? '*' : String(flags.cors)
-  if (flags.heartbeat) overrides.heartbeatIntervalMs = Number(flags.heartbeat)
-  if (flags['heartbeat-interval']) overrides.heartbeatIntervalMs = Number(flags['heartbeat-interval'])
-  if (flags['request-timeout']) overrides.requestTimeoutMs = Number(flags['request-timeout'])
-  if (flags.timeout) overrides.requestTimeoutMs = Number(flags.timeout)
-  if (flags['max-clients']) overrides.maxClients = Number(flags['max-clients'])
-  if (flags.maxClients) overrides.maxClients = Number(flags.maxClients)
+  if (flags.cors !== undefined) {
+    const v = flags.cors
+    if (v === true || v === 'true' || v === '*') {
+      overrides.cors = true
+    } else if (v === false || v === 'false') {
+      overrides.cors = false
+    } else {
+      overrides.cors = String(v)
+    }
+  }
+  const heartbeat = toNumber(flags.heartbeat ?? flags['heartbeat-interval'])
+  if (heartbeat !== undefined) overrides.heartbeatIntervalMs = heartbeat
+  const timeout = toNumber(flags['request-timeout'] ?? flags.timeout)
+  if (timeout !== undefined) overrides.requestTimeoutMs = timeout
+  const maxClients = toNumber(flags['max-clients'] ?? flags.maxClients)
+  if (maxClients !== undefined) overrides.maxClients = maxClients
   return createServerConfig(overrides)
 }
 
 function normalizeOverrides(overrides) {
   const out = { ...overrides }
-  if (out.cors === true) out.cors = '*'
-  if (out.cors === false || out.cors === 'false') out.cors = false
+  if (out.cors === true || out.cors === 'true' || out.cors === '*') {
+    out.cors = '*'
+  } else if (out.cors === false || out.cors === 'false') {
+    out.cors = false
+  } else if (out.cors !== undefined && out.cors !== null) {
+    out.cors = String(out.cors)
+  }
   return out
 }
 
