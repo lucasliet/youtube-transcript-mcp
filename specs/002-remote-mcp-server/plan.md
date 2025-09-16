@@ -118,4 +118,4 @@ Extend the existing YouTube Transcript MCP CLI to expose an optional remote HTTP
 - [ ] Complexity deviations documented
 
 ---
-*Based on placeholder constitution in `/Users/lucas/Projetos/youtube-transcript-mcp/memory/constitution.md`; will revisit if document is amended.*
+*Based on placeholder constitution in `/Users/lucas/Projetos/youtube-transcript-mcp/.specify/memory/constitution.md`; will revisit if document is amended.*

@@ -49,7 +49,7 @@
 
 ## Phase 3.5: Polish
 - [ ] T024 [P] Update documentation to reflect remote mode (refresh `/Users/lucas/Projetos/youtube-transcript-mcp/README.md`, `/Users/lucas/Projetos/youtube-transcript-mcp/specs/002-remote-mcp-server/quickstart.md`, e `/Users/lucas/Projetos/youtube-transcript-mcp/AGENTS.md` com a nova estrutura e comandos).
-- [ ] T025 [P] Replace placeholder constitution with actual project principles em `/Users/lucas/Projetos/youtube-transcript-mcp/memory/constitution.md` alinhando com as práticas vigentes.
+- [ ] T025 [P] Replace placeholder constitution with actual project principles em `/Users/lucas/Projetos/youtube-transcript-mcp/.specify/memory/constitution.md` alinhando com as práticas vigentes.
 - [ ] T026 Run full validation (`npm test`, `npm run lint`) e registrar resultados nas notas de mudança.
 
 ## Dependencies & Ordering Notes
