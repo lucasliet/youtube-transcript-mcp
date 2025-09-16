@@ -34,4 +34,4 @@ Nenhum segredo é armazenado ou versionado. Configurações sensíveis são lida
 ## Governance
 Esta constituição rege todas as PRs do repositório. Alterações devem ser documentadas neste arquivo com versão e data atualizadas. Revisores bloqueiam mudanças que violem os princípios acima ou que não comprovem testes e documentação atualizados.
 
-**Version**: 1.0.0 | **Ratified**: 2025-09-30 | **Last Amended**: 2025-09-30
+**Version**: 2.0.0 | **Ratified**: 2025-09-30 | **Last Amended**: 2025-09-30
