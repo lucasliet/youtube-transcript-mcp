@@ -9,6 +9,7 @@
 - `tests/{unit,integration,contract}/*.test.js`: Testes com `node:test`.
 - `specs/###-feature/*`: Documentos de spec/plan/tasks por feature.
 - `.specify/…`: Infraestrutura do spec-kit (memórias, scripts, templates).
+- `specs/002-remote-mcp-server/*`: Extend the existing YouTube Transcript MCP CLI to expose an optional remote HTTP mode using Server-Sent Events. Remote clients connect via GET /mcp/events, receive a server-assigned connectionId, submit JSON-RPC requests with POST /mcp/messages, and stream responses (ready, message, error, heartbeat) without impacting stdio usage. The release keeps the tool contract identical and adds configuration flags for remote hosting, concurrency limits, and heartbeat/timeout controls.
 
 ## Build, Test, and Development Commands
 - `node src/cli.js`: Inicia o servidor MCP via stdio.
