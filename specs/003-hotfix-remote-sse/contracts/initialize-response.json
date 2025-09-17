@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://modelcontextprotocol.io/schemas/initialize-response.json",
+  "title": "MCP Initialize Response",
+  "description": "JSON-RPC response from initialize method",
+  "type": "object",
+  "properties": {
+    "jsonrpc": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "id": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" }
+      ]
+    },
+    "result": {
+      "type": "object", 
+      "properties": {
+        "protocolVersion": {
+          "type": "string",
+          "const": "2025-06-18"
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "tools": {
+              "type": "object",
+              "properties": {
+                "listChanged": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            },
+            "resources": {
+              "type": "object", 
+              "properties": {
+                "listChanged": { "type": "boolean" },
+                "subscribe": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            },
+            "prompts": {
+              "type": "object",
+              "properties": {
+                "listChanged": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": true
+        },
+        "serverInfo": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" }
+          },
+          "required": ["name", "version"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["protocolVersion", "capabilities", "serverInfo"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["jsonrpc", "id", "result"],
+  "additionalProperties": false
+}

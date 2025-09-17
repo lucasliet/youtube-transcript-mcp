@@ -1,0 +1,232 @@
+# Data Model: Remote SSE MCP Lifecycle Hotfix
+
+## SDK Transport Layer
+
+### MCP TypeScript SDK Integration
+```typescript
+// Primary transport for modern clients (Streamable HTTP)
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+
+// Legacy transport for backwards compatibility
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+
+// Core MCP server
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+```
+
+### Transport Management Entity
+```typescript
+interface TransportRegistry {
+  streamable: Record<string, StreamableHTTPServerTransport>  // Modern clients
+  sse: Record<string, SSEServerTransport>                   // Legacy clients
+}
+
+interface SDKSessionConfig {
+  sessionIdGenerator: () => string          // UUID generator for sessions
+  enableDnsRebindingProtection: boolean     // Security for remote access
+  allowedHosts: string[]                    // Permitted host list
+  allowedOrigins: string[]                  // CORS origins
+}
+```
+
+## Session State Machine
+
+### SessionState Entity
+```typescript
+// SDK-managed session state
+interface SessionState {
+  id: string                    // UUID session identifier (SDK-generated)
+  transport: StreamableHTTPServerTransport | SSEServerTransport
+  state: SessionStateEnum       // Current lifecycle state
+  protocolVersion: string       // MCP protocol version (2025-06-18)
+  clientCapabilities: object    // Client capabilities from initialize
+  serverCapabilities: object    // Server capabilities response
+  createdAt: Date              // Session creation timestamp  
+  lastActivity: Date           // Last client interaction
+  activeRequest: RequestState | null  // Current executing request
+}
+
+enum SessionStateEnum {
+  CONNECTING = 'connecting',     // Transport established, awaiting initialize
+  INITIALIZED = 'initialized',  // initialize method completed by SDK
+  READY = 'ready',              // tools/list and tools/call allowed
+  SHUTDOWN = 'shutdown'         // shutdown method called, cleanup in progress
+}
+```
+
+### State Transitions
+```typescript
+const ValidTransitions: Record<SessionStateEnum, SessionStateEnum[]> = {
+  [SessionStateEnum.CONNECTING]: [SessionStateEnum.INITIALIZED],
+  [SessionStateEnum.INITIALIZED]: [SessionStateEnum.READY], 
+  [SessionStateEnum.READY]: [SessionStateEnum.SHUTDOWN],
+  [SessionStateEnum.SHUTDOWN]: [] // Terminal state
+}
+```
+
+### Validation Rules
+- Sessions MUST start in CONNECTING state when transport established via SDK
+- SDK automatically handles initialize method and state transitions
+- tools/list and tools/call MUST be rejected if state != READY (SDK-enforced)
+- shutdown method MUST trigger SDK transport cleanup and session removal
+- Multiple initialize calls on same session MUST be rejected by SDK
+- Session timeout MUST cleanup resources via SDK transport.onclose handlers
+- SDK manages protocol version validation and capabilities negotiation automatically
+
+## MCP Protocol Headers
+
+### SDK-Managed Headers Entity
+```typescript
+// Headers automatically handled by SDK transports
+interface MCPHeaders {
+  'MCP-Protocol-Version': '2025-06-18'  // SDK sets protocol version
+  'Mcp-Session-Id': string             // SDK-generated session identifier
+  'Content-Type': 'application/json'    // SDK sets content type
+  'Accept': 'application/json, text/event-stream' // SDK handles response formats
+}
+```
+
+### Header Validation Rules
+- SDK automatically validates MCP-Protocol-Version ('2025-06-18')
+- SDK generates and validates Mcp-Session-Id in UUID format
+- Missing required headers handled by SDK with appropriate HTTP status codes
+- Invalid protocol version handled by SDK with 426 Upgrade Required
+- CORS headers managed by SDK configuration (exposedHeaders: ['Mcp-Session-Id'])
+
+## JSON-RPC Message Format
+
+### SDK-Handled Initialize Request/Response
+```typescript
+// SDK automatically processes these request/response types
+interface InitializeRequest {
+  jsonrpc: '2.0'
+  id: string | number
+  method: 'initialize'
+  params: {
+    protocolVersion: '2025-06-18'
+    capabilities: ClientCapabilities
+    clientInfo: {
+      name: string
+      version: string
+    }
+  }
+}
+
+interface InitializeResponse {
+  jsonrpc: '2.0'
+  id: string | number  
+  result: {
+    protocolVersion: '2025-06-18'
+    capabilities: ServerCapabilities
+    serverInfo: {
+      name: 'youtube-transcript-mcp'
+      version: string
+    }
+  }
+}
+```
+
+### SDK-Handled Shutdown Request/Response  
+```typescript
+// SDK automatically processes shutdown lifecycle
+interface ShutdownRequest {
+  jsonrpc: '2.0'
+  id: string | number
+  method: 'shutdown'
+  params?: {}
+}
+
+interface ShutdownResponse {
+  jsonrpc: '2.0'
+  id: string | number
+  result: {}
+}
+```
+
+### SDK-Generated Capabilities Objects
+```typescript
+// Capabilities automatically generated by SDK based on registered tools/resources
+interface ServerCapabilities {
+  tools: {
+    listChanged?: boolean    // SDK handles tool list notifications
+  }
+  resources?: {
+    listChanged?: boolean    // SDK handles resource notifications  
+    subscribe?: boolean
+  }
+  prompts?: {
+    listChanged?: boolean    // SDK handles prompt notifications
+  }
+}
+
+interface ClientCapabilities {
+  roots?: {
+    listChanged?: boolean
+  }
+  sampling?: {}             // SDK validates client capabilities
+  [key: string]: unknown
+}
+```
+
+## Error Handling States
+
+### SDK-Managed MCP Error Codes
+```typescript
+// Error codes handled automatically by SDK transports
+enum MCPErrorCodes {
+  INVALID_REQUEST = -32600,      // Invalid JSON-RPC (SDK validation)
+  METHOD_NOT_FOUND = -32601,     // Unknown method (SDK routing)
+  INVALID_PARAMS = -32602,       // Invalid parameters (SDK validation)
+  INTERNAL_ERROR = -32603,       // Server error (SDK error handling)
+  SESSION_NOT_INITIALIZED = -32001,  // Tools called before initialize (SDK state)
+  PROTOCOL_VERSION_MISMATCH = -32002,  // Unsupported protocol (SDK validation)
+  SESSION_NOT_FOUND = -32003     // Invalid session ID (SDK session management)
+}
+```
+
+### SDK Error Response Format
+```typescript
+// Error responses automatically formatted by SDK
+interface MCPErrorResponse {
+  jsonrpc: '2.0'
+  id: string | number | null
+  error: {
+    code: MCPErrorCodes           // SDK-generated error codes
+    message: string               // SDK-generated error messages
+    data?: unknown                // Optional error context
+  }
+}
+```
+
+## Backward Compatibility Model
+
+### SDK-Based Legacy Support
+```typescript
+// SDK provides built-in backwards compatibility
+interface BackwardsCompatibilityConfig {
+  streamableHttp: StreamableHTTPServerTransport  // Modern protocol (2025-03-26)
+  sse: SSEServerTransport                        // Legacy protocol (2024-11-05)
+  dualEndpointSupport: boolean                   // Support both transport types
+}
+
+interface LegacyEndpointResponse {
+  error: {
+    code: 'endpoint_deprecated'
+    message: string
+    migration: {
+      oldEndpoint: string
+      newEndpoint: '/mcp'
+      method: 'GET' | 'POST'
+      sdkTransport: 'StreamableHTTP' | 'SSE'    // SDK transport recommendation
+    }
+  }
+}
+```
+
+### SDK Migration Guidance Rules
+- GET /mcp/events → GET /mcp with StreamableHTTPServerTransport or SSEServerTransport
+- POST /mcp/messages → POST /mcp with SDK transport.handleRequest()
+- Custom envelope format → SDK direct JSON-RPC processing
+- connectionId parameter → SDK-managed Mcp-Session-Id header
+- Manual session management → SDK automatic session lifecycle
+- Custom error handling → SDK standardized error responses
