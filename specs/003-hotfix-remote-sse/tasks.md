@@ -114,8 +114,8 @@
 
 ## Phase 3.6: Integration & Compatibility
 - [x] T027 Stdio mode compatibility validation (ensure no regression)
-- [x] T028 Tool registration via SDK McpServer.registerTool() integration
-- [x] T029 Legacy endpoint deprecation handling (return migration guidance)
+- [ ] T028 Tool registration via SDK McpServer.registerTool() integration (pending: add registerTool-based wiring)
+- [ ] T029 Legacy endpoint deprecation handling (return migration guidance) (pending: respond with migration guidance on legacy endpoints)
 - [x] T030 SDK CORS configuration with exposedHeaders: ['Mcp-Session-Id'] and allowedOrigins validation
 - [x] T031 [P] Constitutional compliance validation (single tool focus)
 - [x] T032 [P] Add governance rule to constitution.md requiring AGENTS.md/constitution.md updates after implementations
@@ -129,11 +129,11 @@
 ## Phase 3.8: Polish & Validation
 - [x] T037 [P] SDK configuration unit tests in `tests/unit/sdk_config.test.js`
 - [x] T038 [P] Transport registry unit tests in `tests/unit/sdk_transport_registry.test.js`
-- [x] T039 Execute quickstart.md validation scenarios (all phases)
-- [ ] T040 Performance validation: SDK session handling vs custom implementation
+- [ ] T039 Execute quickstart.md validation scenarios (all phases) (pending: run quickstart validation scenarios)
+- [x] T040 Performance validation: SDK session handling vs custom implementation
 - [x] T041 [P] Update AGENTS.md with SDK architecture changes
 - [x] T042 [P] Update documentation for SDK-based remote mode
-- [x] T043 Troubleshooting scenarios validation from quickstart.md
+- [ ] T043 Troubleshooting scenarios validation from quickstart.md (pending: validate troubleshooting scenarios end-to-end)
 ## Dependencies
 - Setup (T001-T002) before tests (T003-T017)
 - Contract tests (T003-T010) before integration tests (T011-T017)

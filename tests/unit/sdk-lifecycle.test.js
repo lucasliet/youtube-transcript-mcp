@@ -7,7 +7,7 @@ describe('SDK Components', () => {
   it('should create SDK server config', () => {
     const config = createSdkServerConfig({ port: 3333 })
     assert(config.serverInfo.name === 'youtube-transcript-mcp', 'Should have correct server name')
-    assert(config.serverInfo.version === '2.0.0', 'Should have correct version')
+    assert(config.serverInfo.version === '2.0.1', 'Should have correct version')
     assert(config.capabilities.tools, 'Should have tools capability')
     console.log('SDK config created successfully')
   })

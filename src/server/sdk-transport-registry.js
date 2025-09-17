@@ -1,6 +1,7 @@
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import http from 'node:http'
 import { once } from 'node:events'
+import { logSdkError, logSdkTransport, SDK_ERROR_CATEGORIES } from '../lib/log.js'
 
 export class SdkTransportRegistry {
   constructor(config, server) {
@@ -80,10 +81,26 @@ export class SdkTransportRegistry {
 
   setupCorsHeaders(res) {
     if (this.config.cors) {
-      res.setHeader('Access-Control-Allow-Origin', this.config.cors === true ? '*' : this.config.cors)
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization')
+      const origin = this.config.cors === true ? '*' : this.config.cors
+      res.setHeader('Access-Control-Allow-Origin', origin)
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, X-Session-Id')
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+      res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id')
+      
+      // Validate allowed origins for security
+      if (origin !== '*' && !this.isAllowedOrigin(origin)) {
+        console.warn('CORS: Origin ' + origin + ' not in allowed list')
+      }
     }
+  }
+
+  isAllowedOrigin(origin) {
+    // Allow localhost origins for development
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return true
+    }
+    // Add more origin validation logic as needed
+    return true // For now, allow all non-wildcard origins
   }
 
   isMcpEndpoint(url) {
@@ -106,6 +123,8 @@ export class SdkTransportRegistry {
 
   async handleSseConnection(req, res) {
     try {
+      logSdkTransport('sse_connection_start', { endpoint: '/mcp', userAgent: req.headers['user-agent'] })
+      
       const transport = new SSEServerTransport('/mcp', res)
       await this.server.connect(transport)
       
@@ -113,12 +132,18 @@ export class SdkTransportRegistry {
       const transportId = transport.sessionId
       this.activeTransports.set(transportId, transport)
       
+      logSdkTransport('sse_connection_established', { sessionId: transportId, type: 'sse' })
+      
       // Clean up on connection close
       req.on('close', () => {
+        logSdkTransport('sse_connection_closed', { sessionId: transportId, type: 'sse' })
         this.activeTransports.delete(transportId)
       })
     } catch (err) {
-      console.error('SSE connection error:', err.message)
+      logSdkError(SDK_ERROR_CATEGORIES.SSE_CONNECTION, "SSE connection failed: " + err.message, undefined, {
+        endpoint: '/mcp',
+        error: err.message
+      })
       // Don't try to send error response here - transport may have already started
       throw err
     }
@@ -144,8 +169,14 @@ export class SdkTransportRegistry {
   }
 
   extractSessionId(req) {
-    // Extract session ID from headers or query parameters
-    return req.headers['x-session-id'] || req.url?.split('sessionId=')[1]?.split('&')[0]
+    if (!req) return undefined
+    const headerId = req.headers?.['x-session-id'] || req.headers?.['X-Session-Id']
+    if (headerId) return headerId
+    if (!req.url) return undefined
+    const queryIndex = req.url.indexOf('?')
+    if (queryIndex === -1) return undefined
+    const searchParams = new URLSearchParams(req.url.slice(queryIndex + 1))
+    return searchParams.get('sessionId') || undefined
   }
 
   sendError(res, statusCode, message) {

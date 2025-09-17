@@ -13,13 +13,13 @@ export async function startRemoteServer(options = {}) {
 }
 
 export async function openEventStream(server, headers = {}) {
-  const controller = new AbortController()
-  const response = await fetch(`${server.baseUrl}/mcp/events`, {
+  const controller = new globalThis.AbortController()
+  const response = await globalThis.fetch(`${server.baseUrl}/mcp/events`, {
     headers: { Accept: 'text/event-stream', ...headers },
     signal: controller.signal
   })
   const stream = Readable.fromWeb(response.body)
-  const decoder = new TextDecoder()
+  const decoder = new globalThis.TextDecoder()
   let buffer = ''
   const events = []
   const waiters = []
@@ -63,16 +63,16 @@ export async function openEventStream(server, headers = {}) {
     return new Promise((resolve, reject) => {
       const waiter = {
         resolve: (value) => {
-          if (timer) clearTimeout(timer)
+          if (timer) globalThis.clearTimeout(timer)
           resolve(value)
         },
         reject: (err) => {
-          if (timer) clearTimeout(timer)
+          if (timer) globalThis.clearTimeout(timer)
           reject(err)
         }
       }
       waiters.push(waiter)
-      timer = setTimeout(() => {
+      timer = globalThis.setTimeout(() => {
         const index = waiters.indexOf(waiter)
         if (index !== -1) waiters.splice(index, 1)
         reject(new Error('event timeout'))
@@ -104,7 +104,7 @@ function waitersSliceReject(waiters, error) {
 }
 
 export async function postMessage(server, payload, headers = {}) {
-  return fetch(`${server.baseUrl}/mcp/messages`, {
+  return globalThis.fetch(`${server.baseUrl}/mcp/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify(payload)

@@ -46,7 +46,7 @@ test('integration: large transcript not truncated', async () => {
  * @returns Mocked Response.
  */
 function mkResponse(status, body, contentType = 'text/html') {
-  return new Response(body, { status, headers: { 'content-type': contentType } })
+  return new globalThis.Response(body, { status, headers: { 'content-type': contentType } })
 }
 
 /**
