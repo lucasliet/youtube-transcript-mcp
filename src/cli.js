@@ -4,7 +4,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 import { parseCliConfig } from './server/config.js'
-import { startRemoteServer } from './server/remote-server.js'
+import { startSdkRemoteServer } from './server/remote-server.js'
 
 /**
  * CLI/MCP entrypoint. If --videoUrl is provided, runs a one-off fetch and prints JSON.
@@ -84,7 +84,7 @@ async function startMcpServer() {
 }
 
 async function startRemoteMode(config) {
-  const server = await startRemoteServer({
+  const server = await startSdkRemoteServer({
     port: config.port,
     host: config.host,
     cors: config.cors,

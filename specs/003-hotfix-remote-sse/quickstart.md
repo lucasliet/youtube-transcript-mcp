@@ -20,7 +20,7 @@ npm install
 ### 1.2 Start SDK Remote Server
 ```bash
 # Start server with SDK transports in remote mode on port 3333
-node src/cli.js --mode remote --port 3333 --host 127.0.0.1 --cors true
+npm run start:remote -- --port 3333 --host 127.0.0.1 --cors true
 ```
 
 **Expected Output**: 
@@ -50,8 +50,8 @@ Mcp-Session-Id: {uuid}
 # Test modern streamable HTTP transport
 curl -X POST http://127.0.0.1:3333/mcp \
      -H "Content-Type: application/json" \
-     -H "MCP-Protocol-Version: 2025-06-18" \
-     -d '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test-client", "version": "1.0.0"}}}'
+     -H "MCP-Protocol-Version: 2024-11-05" \
+     -d '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test-client", "version": "1.0.0"}}}'
 ```
 
 **Expected Output**:
@@ -60,13 +60,13 @@ curl -X POST http://127.0.0.1:3333/mcp \
   "jsonrpc": "2.0",
   "id": 1,
   "result": {
-    "protocolVersion": "2025-06-18", 
+    "protocolVersion": "2024-11-05", 
     "capabilities": {
       "tools": {"listChanged": true}
     },
     "serverInfo": {
       "name": "youtube-transcript-mcp",
-      "version": "0.1.0"
+      "version": "2.0.1"
     }
   }
 }
@@ -102,13 +102,13 @@ data: {"sessionId":"[uuid]","timestamp":1234567890}
 # Test SDK-handled initialize with session management
 SESSION_ID=$(curl -s -X POST http://127.0.0.1:3333/mcp \
   -H "Content-Type: application/json" \
-  -H "MCP-Protocol-Version: 2025-06-18" \
+  -H "MCP-Protocol-Version: 2024-11-05" \
   -d '{
     "jsonrpc": "2.0",
     "id": "init-1",
     "method": "initialize", 
     "params": {
-      "protocolVersion": "2025-06-18",
+      "protocolVersion": "2024-11-05",
       "capabilities": {},
       "clientInfo": {
         "name": "test-client",
@@ -131,7 +131,7 @@ Session ID: [uuid-v4]
 ```bash
 curl -X POST http://127.0.0.1:3333/mcp \
   -H "Content-Type: application/json" \
-  -H "MCP-Protocol-Version: 2025-06-18" \
+  -H "MCP-Protocol-Version: 2024-11-05" \
   -H "Mcp-Session-Id: $SESSION_ID" \
   -d '{
     "jsonrpc": "2.0",
@@ -161,7 +161,7 @@ curl -X POST http://127.0.0.1:3333/mcp \
 ```bash
 curl -X POST http://127.0.0.1:3333/mcp \
   -H "Content-Type: application/json" \
-  -H "MCP-Protocol-Version: 2025-06-18" \
+  -H "MCP-Protocol-Version: 2024-11-05" \
   -H "Mcp-Session-Id: $SESSION_ID" \
   -d '{
     "jsonrpc": "2.0",
@@ -196,7 +196,7 @@ curl -X POST http://127.0.0.1:3333/mcp \
 ```bash
 curl -X POST http://127.0.0.1:3333/mcp \
   -H "Content-Type: application/json" \
-  -H "MCP-Protocol-Version: 2025-06-18" \
+  -H "MCP-Protocol-Version: 2024-11-05" \
   -H "Mcp-Session-Id: $SESSION_ID" \
   -d '{
     "jsonrpc": "2.0",
@@ -222,7 +222,7 @@ curl -X POST http://127.0.0.1:3333/mcp \
 ```bash
 # Start fresh connection
 curl -N -H "Accept: text/event-stream" \
-     -H "MCP-Protocol-Version: 2025-06-18" \
+     -H "MCP-Protocol-Version: 2024-11-05" \
      http://127.0.0.1:3333/mcp &
 
 # Try tools/list without initialize

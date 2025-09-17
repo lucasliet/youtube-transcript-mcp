@@ -33,22 +33,6 @@
 
 ## Node.js Implementation Patterns
 
-### Decision: SDK-Based Express.js Integration
-**Rationale**: SDK examples demonstrate Express.js integration patterns for MCP servers. SDK handles all protocol complexity while Express provides familiar HTTP server structure. Constitutional compliance maintained as SDK is existing project dependency.
-
-**Implementation approach**:
-- Express app with SDK transport integration  
-- SDK manages session registry automatically
-- Native session cleanup via SDK transport.onclose handlers
-- Built-in CORS and header validation
-
-**Alternatives considered**:
-- Native HTTP server + SDK: Rejected - SDK examples show Express integration patterns
-- Custom HTTP implementation: Rejected - SDK handles transport layer completely
-- WebSocket approach: Rejected - MCP specification uses SSE, SDK provides proper implementation
-
-## Testing Strategy Research
-
 ### Decision: SDK Integration Testing with Contract Validation
 **Rationale**: Focus testing on SDK integration points and backwards compatibility rather than reimplementing MCP protocol tests. SDK handles protocol compliance, tests verify integration correctness and configuration.
 

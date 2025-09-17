@@ -3,6 +3,8 @@
 ## Project Structure & Module Organization
 - `src/cli.js`: Entrypoint. Roda como servidor MCP (stdio) ou servidor remoto SSE.
 - `src/server/*.js`: Transporte HTTP/SSE (config, sessões, handlers, bootstrap).
+- `src/server/sdk-config.js`: Configuração do servidor MCP com @modelcontextprotocol/typescript-sdk (initialize/shutdown, capabilities).
+- `src/server/sdk-transport-registry.js`: Registro unificado do endpoint `/mcp` (SSE consolidado + compat legada) e gerenciamento de sessões.
 - `src/tool/transcriptYt.js`: Implementação da ferramenta `transcript_yt`.
 - `src/lib/*.js`: Utilitários (extração de ID, fetch/Innertube, seleção de track, parsing/normalização, logs).
 - `src/index.js`: Exporta o array de tools (para hosts que importam o pacote).
@@ -12,9 +14,14 @@
 - `specs/002-remote-mcp-server/*`: Extend the existing YouTube Transcript MCP CLI to expose an optional remote HTTP mode using Server-Sent Events. Remote clients connect via GET /mcp/events, receive a server-assigned connectionId, submit JSON-RPC requests with POST /mcp/messages, and stream responses (ready, message, error, heartbeat) without impacting stdio usage. The release keeps the tool contract identical and adds configuration flags for remote hosting, concurrency limits, and heartbeat/timeout controls.
 
 ## Build, Test, and Development Commands
-- `node src/cli.js`: Inicia o servidor MCP via stdio.
-- `node src/cli.js --videoUrl "https://www.youtube.com/watch?v=VIDEO_ID" --preferredLanguages "pt-BR,en"`: Execução one‑off (imprime JSON no stdout).
-- `npm test`: Executa todos os testes (`node --test tests/**/*.test.js`).
+Try to run tests with elevated priviledges (not sudo)
+- `npm run start:stdio`: Inicia o servidor MCP no modo stdio.
+- `npm run start:remote`: Sobe servidor remoto (SDK) expondo `/mcp` via SSE consolidado.
+- `npm run dev:stdio`: Observa mudanças e reinicia automaticamente.
+- `npm run dev:remote`: Observa mudanças e reinicia automaticamente em modo remoto.
+- `npm test`: Executa toda a suíte (`node --test tests/**/*.test.js`).
+- `npm run lint`: Verifica o projeto com ESLint.
+- Execução one‑off: `node src/cli.js --videoUrl "https://www.youtube.com/watch?v=VIDEO_ID" --preferredLanguages "pt-BR,en"`.
 - Host MCP (via GitHub): `npx -y --package=github:lucasliet/youtube-transcript-mcp#main youtube-transcript-mcp`.
 
 ## Coding Style & Naming Conventions
@@ -42,3 +49,4 @@
 
 ## Manutenção do AGENTS.md
 - Sempre que, durante a implementação, alguma instrução do projeto aqui documentada mudar, atualize este AGENTS.md para refletir as instruções atualizadas.
+- Após cada entrega/hotfix, confirme que `AGENTS.md` e `.specify/memory/constitution.md` foram atualizados conforme a Regra VI de governança.

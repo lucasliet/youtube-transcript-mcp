@@ -4,13 +4,13 @@
 **Branch**: `003-hotfix-remote-sse` | **Date**: 2025-09-17 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/Users/lucas/Projetos/Pessoal/youtube-transcript-mcp/specs/003-hotfix-remote-sse/spec.md`
 
-## Execu**Phase Status**:
+## Execution **Phase Status**:
 - [x] Phase 0: Research complete (/plan command)
 - [x] Phase 1: Design complete (/plan command)
 - [x] Phase 2: Task planning complete (/plan command - describe approach only)
-- [ ] Phase 3: Tasks generated (/tasks command)
-- [ ] Phase 4: Implementation complete
-- [ ] Phase 5: Validation passed
+- [x] Phase 3: Tasks generated (/tasks command)
+- [x] Phase 4: Implementation complete
+- [x] Phase 5: Validation passed
 
 **Gate Status**:
 - [x] Initial Constitution Check: PASS
@@ -52,7 +52,7 @@ Migrate remote SSE server from custom implementation to official `@modelcontextp
 
 ## Technical Context
 **Language/Version**: JavaScript ESM (Node.js 18+)  
-**Primary Dependencies**: @modelcontextprotocol/typescript-sdk (existing), Express.js (SDK integration), Native Node.js modules  
+**Primary Dependencies**: @modelcontextprotocol/typescript-sdk (existing), Native Node.js modules  
 **Storage**: SDK-managed session registry with automatic cleanup  
 **Testing**: node:test framework with SDK integration and transport validation  
 **Target Platform**: Node.js server (Linux/macOS/Windows)  
@@ -104,13 +104,13 @@ src/
 
 tests/
 ├── contract/
-│   ├── sdk_integration.test.js  # ← NEW: SDK integration contract
-│   ├── backwards_compat.test.js # ← NEW: Legacy client support
-│   └── transport_switching.test.js # ← NEW: Streamable/SSE transport tests
+│   ├── sdk_integration_contract.test.js  # ← NEW: SDK integration contract
+│   ├── backwards_compatibility_contract.test.js # ← NEW: Legacy client support
+│   └── transport_switching_contract.test.js # ← NEW: Streamable/SSE transport tests
 ├── integration/
-│   ├── sdk_lifecycle.test.js    # ← NEW: Full SDK lifecycle test
-│   ├── ide_client_compat.test.js # ← NEW: Real IDE client tests
-│   └── session_cleanup.test.js  # ← NEW: SDK session cleanup tests
+│   ├── sdk_lifecycle_integration.test.js    # ← NEW: Full SDK lifecycle test
+│   ├── ide_client_compatibility_integration.test.js # ← NEW: Real IDE client tests
+│   └── session_cleanup_integration.test.js  # ← NEW: SDK session cleanup tests
 └── unit/
     ├── sdk_config.test.js       # ← NEW: SDK configuration validation
     └── transport_registry.test.js # ← NEW: Transport management tests
@@ -312,8 +312,8 @@ ios/ or android/
 - [x] Phase 1: Design complete (/plan command)
 - [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [x] Phase 3: Tasks generated (/tasks command)
-- [ ] Phase 4: Implementation complete
-- [ ] Phase 5: Validation passed
+- [x] Phase 4: Implementation complete
+- [x] Phase 5: Validation passed
 
 **Gate Status**:
 - [x] Initial Constitution Check: PASS
