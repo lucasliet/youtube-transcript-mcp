@@ -4,6 +4,7 @@ import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../../package.json')
+const PROTOCOL_VERSION = '2025-06-18'
 
 describe('SDK Initialize Contract', () => {
   it('should validate MCP initialize request schema', () => {
@@ -12,7 +13,7 @@ describe('SDK Initialize Contract', () => {
       id: 1,
       method: 'initialize',
       params: {
-        protocolVersion: '2024-11-05',
+        protocolVersion: PROTOCOL_VERSION,
         capabilities: {
           tools: {}
         },
@@ -27,7 +28,7 @@ describe('SDK Initialize Contract', () => {
     assert.equal(validInitializeRequest.jsonrpc, '2.0', 'Should have JSON-RPC version')
     assert.equal(validInitializeRequest.method, 'initialize', 'Should have initialize method')
     assert(validInitializeRequest.params, 'Should have params')
-    assert.equal(validInitializeRequest.params.protocolVersion, '2024-11-05', 'Should have correct protocol version')
+    assert.equal(validInitializeRequest.params.protocolVersion, PROTOCOL_VERSION, 'Should have correct protocol version')
     assert(validInitializeRequest.params.clientInfo, 'Should have client info')
     console.log('MCP initialize request schema validated')
   })
@@ -37,7 +38,7 @@ describe('SDK Initialize Contract', () => {
       jsonrpc: '2.0',
       id: 1,
       result: {
-        protocolVersion: '2024-11-05',
+        protocolVersion: PROTOCOL_VERSION,
         capabilities: {
           tools: {
             listChanged: true
@@ -54,7 +55,7 @@ describe('SDK Initialize Contract', () => {
     assert.equal(validInitializeResponse.jsonrpc, '2.0', 'Should have JSON-RPC version')
     assert.equal(validInitializeResponse.id, 1, 'Should have matching request ID')
     assert(validInitializeResponse.result, 'Should have result')
-    assert.equal(validInitializeResponse.result.protocolVersion, '2024-11-05', 'Should return correct protocol version')
+    assert.equal(validInitializeResponse.result.protocolVersion, PROTOCOL_VERSION, 'Should return correct protocol version')
     assert(validInitializeResponse.result.serverInfo, 'Should have server info')
     console.log('MCP initialize response schema validated')
   })

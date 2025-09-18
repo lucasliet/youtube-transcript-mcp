@@ -5,6 +5,7 @@ import { createSdkServerConfig, createSdkServer } from '../../src/server/sdk-con
 
 const require = createRequire(import.meta.url)
 const { version } = require('../../package.json')
+const PROTOCOL_VERSION = '2025-06-18'
 
 describe('SDK Lifecycle Integration', () => {
   let config, server
@@ -28,7 +29,7 @@ describe('SDK Lifecycle Integration', () => {
       id: 1,
       method: 'initialize',
       params: {
-        protocolVersion: '2024-11-05',
+        protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: {} },
         clientInfo: { name: 'test-client', version: '1.0.0' }
       }
@@ -39,7 +40,7 @@ describe('SDK Lifecycle Integration', () => {
       jsonrpc: '2.0',
       id: 1,
       result: {
-        protocolVersion: '2024-11-05',
+        protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: { listChanged: true } },
         serverInfo: { name: 'youtube-transcript-mcp', version }
       }
@@ -47,11 +48,11 @@ describe('SDK Lifecycle Integration', () => {
 
     // Validate request structure
     assert.equal(initializeRequest.method, 'initialize', 'Should be initialize method')
-    assert.equal(initializeRequest.params.protocolVersion, '2024-11-05', 'Should have correct protocol version')
+    assert.equal(initializeRequest.params.protocolVersion, PROTOCOL_VERSION, 'Should have correct protocol version')
 
     // Validate response structure
     assert(initializeResponse.result, 'Should have result')
-    assert.equal(initializeResponse.result.protocolVersion, '2024-11-05', 'Should return correct protocol version')
+    assert.equal(initializeResponse.result.protocolVersion, PROTOCOL_VERSION, 'Should return correct protocol version')
 
     console.log('✅ Initialize request/response cycle validated')
   })

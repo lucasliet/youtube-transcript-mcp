@@ -3,7 +3,7 @@
  * Provides standardized error responses compatible with MCP protocol.
  */
 
-import { logSdkError, SDK_ERROR_CATEGORIES } from './log.js'
+import { logSdkError, SDK_ERROR_CATEGORIES } from '../lib/log.js'
 
 const VALID_ERROR_CODES = new Set([
   'invalid_request',

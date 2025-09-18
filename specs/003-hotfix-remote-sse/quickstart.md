@@ -1,13 +1,13 @@
 # Quickstart Guide: Remote SSE MCP Lifecycle Hotfix
 
 ## Overview
-This guide validates the SDK-based MCP protocol compliance implementation for youtube-transcript-mcp remote SSE mode. It covers the complete IDE client integration workflow using the official @modelcontextprotocol/typescript-sdk for both modern StreamableHTTP and legacy SSE transport compatibility.
+This guide validates the SDK-based MCP protocol compliance implementation for youtube-transcript-mcp remote SSE mode. It covers the complete IDE client integration workflow using the official @modelcontextprotocol/sdk for consolidated SSE transport compatibility.
 
 ## Prerequisites
 - Node.js 18+ installed
 - Git repository cloned locally  
 - Terminal access for running commands
-- @modelcontextprotocol/typescript-sdk dependency installed
+- @modelcontextprotocol/sdk dependency installed
 
 ## Phase 1: Build and Start SDK-Based Server
 
@@ -26,7 +26,6 @@ npm run start:remote -- --port 3333 --host 127.0.0.1 --cors true
 **Expected Output**: 
 ```
 SDK MCP server listening on http://127.0.0.1:3333
-StreamableHTTP transport: enabled
 SSE transport: enabled (backwards compatibility)
 ```
 
@@ -45,13 +44,13 @@ Mcp-Session-Id: {uuid}
 
 ## Phase 2: SDK Transport Testing
 
-### 2.1 Test StreamableHTTP Transport (Modern)
+### 2.1 Test JSON-RPC POST (Modern Clients)
 ```bash
-# Test modern streamable HTTP transport
+# Test modern JSON-RPC POST transport
 curl -X POST http://127.0.0.1:3333/mcp \
      -H "Content-Type: application/json" \
-     -H "MCP-Protocol-Version: 2024-11-05" \
-     -d '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test-client", "version": "1.0.0"}}}'
+     -H "MCP-Protocol-Version: 2025-06-18" \
+     -d '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "test-client", "version": "1.0.0"}}}'
 ```
 
 **Expected Output**:
@@ -60,7 +59,7 @@ curl -X POST http://127.0.0.1:3333/mcp \
   "jsonrpc": "2.0",
   "id": 1,
   "result": {
-    "protocolVersion": "2024-11-05", 
+    "protocolVersion": "2025-06-18", 
     "capabilities": {
       "tools": {"listChanged": true}
     },
@@ -78,7 +77,7 @@ curl -X POST http://127.0.0.1:3333/mcp \
 ```bash
 # Open legacy SSE stream
 curl -N -H "Accept: text/event-stream" \
-     -H "MCP-Protocol-Version: 2024-11-05" \
+     -H "MCP-Protocol-Version: 2025-06-18" \
      http://127.0.0.1:3333/mcp
 ```
 
@@ -100,22 +99,22 @@ data: {"sessionId":"[uuid]","timestamp":1234567890}
 ### 3.1 Initialize MCP Session via SDK
 ```bash
 # Test SDK-handled initialize with session management
-SESSION_ID=$(curl -s -X POST http://127.0.0.1:3333/mcp \
+SESSION_ID=$(curl -s -D - -o /dev/null -X POST http://127.0.0.1:3333/mcp \
   -H "Content-Type: application/json" \
-  -H "MCP-Protocol-Version: 2024-11-05" \
+  -H "MCP-Protocol-Version: 2025-06-18" \
   -d '{
     "jsonrpc": "2.0",
     "id": "init-1",
-    "method": "initialize", 
+    "method": "initialize",
     "params": {
-      "protocolVersion": "2024-11-05",
+      "protocolVersion": "2025-06-18",
       "capabilities": {},
       "clientInfo": {
         "name": "test-client",
         "version": "1.0.0"
       }
     }
-  }' | grep -o '"Mcp-Session-Id":"[^"]*"' | cut -d'"' -f4)
+  }' | awk -F': ' '/^Mcp-Session-Id:/ {gsub(\"\r\",\"\",$2); print $2; exit}')
 
 echo "Session ID: $SESSION_ID"
 ```
@@ -131,7 +130,7 @@ Session ID: [uuid-v4]
 ```bash
 curl -X POST http://127.0.0.1:3333/mcp \
   -H "Content-Type: application/json" \
-  -H "MCP-Protocol-Version: 2024-11-05" \
+  -H "MCP-Protocol-Version: 2025-06-18" \
   -H "Mcp-Session-Id: $SESSION_ID" \
   -d '{
     "jsonrpc": "2.0",
@@ -161,7 +160,7 @@ curl -X POST http://127.0.0.1:3333/mcp \
 ```bash
 curl -X POST http://127.0.0.1:3333/mcp \
   -H "Content-Type: application/json" \
-  -H "MCP-Protocol-Version: 2024-11-05" \
+  -H "MCP-Protocol-Version: 2025-06-18" \
   -H "Mcp-Session-Id: $SESSION_ID" \
   -d '{
     "jsonrpc": "2.0",
@@ -196,7 +195,7 @@ curl -X POST http://127.0.0.1:3333/mcp \
 ```bash
 curl -X POST http://127.0.0.1:3333/mcp \
   -H "Content-Type: application/json" \
-  -H "MCP-Protocol-Version: 2024-11-05" \
+  -H "MCP-Protocol-Version: 2025-06-18" \
   -H "Mcp-Session-Id: $SESSION_ID" \
   -d '{
     "jsonrpc": "2.0",
@@ -222,7 +221,7 @@ curl -X POST http://127.0.0.1:3333/mcp \
 ```bash
 # Start fresh connection
 curl -N -H "Accept: text/event-stream" \
-     -H "MCP-Protocol-Version: 2024-11-05" \
+     -H "MCP-Protocol-Version: 2025-06-18" \
      http://127.0.0.1:3333/mcp &
 
 # Try tools/list without initialize

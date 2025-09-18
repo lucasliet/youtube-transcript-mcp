@@ -2,6 +2,8 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert'
 import { createSdkServerConfig, createSdkServer } from '../../src/server/sdk-config.js'
 
+const PROTOCOL_VERSION = '2025-06-18'
+
 describe('Multiple Initialize Attempts Test', () => {
   let server
 
@@ -20,7 +22,7 @@ describe('Multiple Initialize Attempts Test', () => {
         id: 1,
         method: 'initialize',
         params: {
-          protocolVersion: '2024-11-05',
+          protocolVersion: PROTOCOL_VERSION,
           capabilities: { tools: {} },
           clientInfo: { name: 'client-1', version: '1.0.0' }
         }
@@ -30,7 +32,7 @@ describe('Multiple Initialize Attempts Test', () => {
         id: 2,
         method: 'initialize',
         params: {
-          protocolVersion: '2024-11-05',
+          protocolVersion: PROTOCOL_VERSION,
           capabilities: { tools: {} },
           clientInfo: { name: 'client-2', version: '1.0.0' }
         }
@@ -40,13 +42,13 @@ describe('Multiple Initialize Attempts Test', () => {
     // Server should handle multiple initialize attempts
     initializeRequests.forEach((request, index) => {
       assert.equal(request.method, 'initialize', 'Request ' + String(index + 1) + ' should be initialize method')
-      assert.equal(request.params.protocolVersion, '2024-11-05', 'Request ' + String(index + 1) + ' should have correct protocol version')
+      assert.equal(request.params.protocolVersion, PROTOCOL_VERSION, 'Request ' + String(index + 1) + ' should have correct protocol version')
     })
   })
 
   it('should validate initialize request parameters', () => {
     const validParams = {
-      protocolVersion: '2024-11-05',
+      protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
       clientInfo: { name: 'test-client', version: '1.0.0' }
     }
@@ -55,8 +57,8 @@ describe('Multiple Initialize Attempts Test', () => {
       null,
       {},
       { protocolVersion: 'invalid' },
-      { protocolVersion: '2024-11-05' }, // missing clientInfo
-      { protocolVersion: '2024-11-05', clientInfo: {} } // empty clientInfo
+      { protocolVersion: PROTOCOL_VERSION }, // missing clientInfo
+      { protocolVersion: PROTOCOL_VERSION, clientInfo: {} } // empty clientInfo
     ]
 
     // Valid parameters should be accepted

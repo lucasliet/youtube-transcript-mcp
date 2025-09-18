@@ -2,12 +2,12 @@
 
 ## SDK Migration Research
 
-### Decision: Adopt Official @modelcontextprotocol/typescript-sdk
+### Decision: Adopt Official @modelcontextprotocol/sdk
 **Rationale**: Research confirmed SDK provides complete MCP protocol compliance with built-in session management, transport layer, and backwards compatibility. Eliminates 200+ lines of custom code while ensuring standards compliance and automatic protocol updates.
 
 **Key SDK Benefits**:
 - StreamableHTTPServerTransport: Modern MCP protocol (2025-03-26) 
-- SSEServerTransport: Legacy support (2024-11-05)
+- SSEServerTransport: Legacy support (2025-06-18)
 - Automatic initialize/shutdown lifecycle handling
 - Built-in session management with UUID generation
 - Standards-compliant error handling and JSON-RPC processing

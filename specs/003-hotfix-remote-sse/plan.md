@@ -48,11 +48,11 @@
 ```
 
 ## Summary
-Migrate remote SSE server from custom implementation to official `@modelcontextprotocol/typescript-sdk` for full MCP protocol compliance. Replace custom transport layer with `StreamableHTTPServerTransport` for modern clients and `SSEServerTransport` for backwards compatibility. SDK automatically handles initialize/shutdown lifecycle, endpoint consolidation, protocol headers, session management, and error handling, significantly reducing implementation complexity while ensuring standards compliance.
+Migrate remote SSE server from custom implementation to official `/sdk` for full MCP protocol compliance. Replace custom transport layer with `StreamableHTTPServerTransport` for modern clients and `SSEServerTransport` for backwards compatibility. SDK automatically handles initialize/shutdown lifecycle, endpoint consolidation, protocol headers, session management, and error handling, significantly reducing implementation complexity while ensuring standards compliance.
 
 ## Technical Context
 **Language/Version**: JavaScript ESM (Node.js 18+)  
-**Primary Dependencies**: @modelcontextprotocol/typescript-sdk (existing), Native Node.js modules  
+**Primary Dependencies**: @modelcontextprotocol/sdk (existing), Native Node.js modules  
 **Storage**: SDK-managed session registry with automatic cleanup  
 **Testing**: node:test framework with SDK integration and transport validation  
 **Target Platform**: Node.js server (Linux/macOS/Windows)  

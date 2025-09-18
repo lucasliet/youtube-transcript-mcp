@@ -4,6 +4,8 @@ import { createSdkServerConfig, createSdkServer } from '../../src/server/sdk-con
 import { SdkTransportRegistry } from '../../src/server/sdk-transport-registry.js'
 import { registerTranscriptTool } from '../../src/server/register-transcript-tool.js'
 
+const PROTOCOL_VERSION = '2025-06-18'
+
 describe('Quickstart Validation Scenarios', () => {
   let registry
   let baseUrl
@@ -25,6 +27,7 @@ describe('Quickstart Validation Scenarios', () => {
     const connection = await openSseConnection(baseUrl)
     assert.equal(typeof connection.sessionId, 'string', 'Session identifier should be available')
     assert.equal(connection.sessionId.length > 0, true, 'Session identifier should not be empty')
+    assert.equal(typeof connection.headerSessionId, 'string', 'Header should include session identifier')
     await connection.close()
   })
 
@@ -36,7 +39,7 @@ describe('Quickstart Validation Scenarios', () => {
       id: 'init-1',
       method: 'initialize',
       params: {
-        protocolVersion: '2024-11-05',
+        protocolVersion: PROTOCOL_VERSION,
         capabilities: {},
         clientInfo: { name: 'quickstart', version: '1.0.0' }
       }
@@ -50,6 +53,14 @@ describe('Quickstart Validation Scenarios', () => {
       params: {}
     })
     assert.equal(listResponse.status, 202, 'tools/list request should be accepted')
+
+    const shutdownResponse = await postSseMessage(baseUrl, connection.sessionId, {
+      jsonrpc: '2.0',
+      id: 'shutdown-1',
+      method: 'shutdown',
+      params: {}
+    })
+    assert.equal(shutdownResponse.status, 202, 'shutdown request should be accepted')
 
     await connection.close()
   })
@@ -76,15 +87,16 @@ async function openSseConnection(baseUrl) {
   const response = await fetch(baseUrl + '/mcp', {
     headers: {
       Accept: 'text/event-stream',
-      'MCP-Protocol-Version': '2024-11-05'
+      'MCP-Protocol-Version': PROTOCOL_VERSION
     },
     signal: controller.signal
   })
   assert.equal(response.status, 200, 'SSE endpoint should respond with 200')
+  const headerSessionId = response.headers.get('mcp-session-id')
   const reader = response.body?.getReader()
   assert(reader, 'SSE response should provide a readable stream')
   const decoder = new TextDecoder()
-  let sessionId
+  let sessionId = headerSessionId || undefined
   let buffer = ''
   while (!sessionId) {
     const { value, done } = await reader.read()
@@ -98,6 +110,7 @@ async function openSseConnection(baseUrl) {
   assert(sessionId, 'SSE endpoint should report session identifier')
   return {
     sessionId,
+    headerSessionId,
     close: async () => {
       await reader.cancel()
       controller.abort()
@@ -117,8 +130,8 @@ async function postSseMessage(baseUrl, sessionId, body) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Session-Id': sessionId,
-      'MCP-Protocol-Version': '2024-11-05'
+      'Mcp-Session-Id': sessionId,
+      'MCP-Protocol-Version': PROTOCOL_VERSION
     },
     body: JSON.stringify(body)
   })

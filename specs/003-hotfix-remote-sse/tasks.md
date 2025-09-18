@@ -45,7 +45,7 @@
 ## Execution Flow (main)
 ```
 1. Load plan.md from feature directory ✓
-   → SDK migration approach: Replace custom transport with @modelcontextprotocol/typescript-sdk
+   → SDK migration approach: Replace custom transport with @modelcontextprotocol/sdk
    → Tech stack: Node.js ESM 18+, modelcontextprotocol SDK
    → Structure: single project (src/, tests/)
 2. Load design documents ✓:

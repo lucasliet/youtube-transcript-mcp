@@ -32,7 +32,7 @@ async function main() {
 async function startMcpServer() {
   const server = new McpServer({
     name: 'youtube-transcript-mcp',
-    version: '0.1.0'
+    version: '2.0.1'
   }, {
     capabilities: { tools: {} }
   })

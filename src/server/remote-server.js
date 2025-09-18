@@ -4,7 +4,7 @@ import { registerTranscriptTool } from './register-transcript-tool.js'
 
 /**
  * Starts the remote MCP server using the official SDK with consolidated /mcp endpoint.
- * Supports both SSE (GET) and StreamableHTTP (POST) transports for IDE compatibility.
+ * Supports both SSE (GET) and JSON-RPC POST transports for IDE compatibility.
  */
 export async function startSdkRemoteServer(overrides = {}) {
   const config = createSdkServerConfig(overrides)

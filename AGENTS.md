@@ -1,9 +1,16 @@
 # Repository Guidelines
 
+## Core Principles & Governance
+All contributions to this repository are governed by the principles and guidelines outlined in our constitution. Before contributing, please familiarize yourself with this document:
+- **Constitution:** `/.specify/memory/constitution.md`
+
+This document establishes the core mission, operational rules, and development workflow to ensure the project remains simple, robust, and focused.
+
+
 ## Project Structure & Module Organization
 - `src/cli.js`: Entrypoint. Roda como servidor MCP (stdio) ou servidor remoto SSE.
 - `src/server/*.js`: Transporte HTTP/SSE (config, sessões, handlers, bootstrap).
-- `src/server/sdk-config.js`: Configuração do servidor MCP com @modelcontextprotocol/typescript-sdk (initialize/shutdown, capabilities).
+- `src/server/sdk-config.js`: Configuração do servidor MCP com @modelcontextprotocol/sdk (initialize/shutdown, capabilities).
 - `src/server/sdk-transport-registry.js`: Registro unificado do endpoint `/mcp` (SSE consolidado + compat legada) e gerenciamento de sessões.
 - `src/tool/transcriptYt.js`: Implementação da ferramenta `transcript_yt`.
 - `src/lib/*.js`: Utilitários (extração de ID, fetch/Innertube, seleção de track, parsing/normalização, logs).
@@ -11,7 +18,7 @@
 - `tests/{unit,integration,contract}/*.test.js`: Testes com `node:test`.
 - `specs/###-feature/*`: Documentos de spec/plan/tasks por feature.
 - `.specify/…`: Infraestrutura do spec-kit (memórias, scripts, templates).
-- `specs/002-remote-mcp-server/*`: Extend the existing YouTube Transcript MCP CLI to expose an optional remote HTTP mode using Server-Sent Events. Remote clients connect via GET /mcp/events, receive a server-assigned connectionId, submit JSON-RPC requests with POST /mcp/messages, and stream responses (ready, message, error, heartbeat) without impacting stdio usage. The release keeps the tool contract identical and adds configuration flags for remote hosting, concurrency limits, and heartbeat/timeout controls.
+- `specs/002-remote-mcp-server/*`: Extend the existing YouTube Transcript MCP CLI to expose an optional remote HTTP mode using Server-Sent Events. Remote clients connect via GET /mcp (consolidated endpoint), exchange JSON-RPC requests with POST /mcp, and stream responses (ready, message, error, heartbeat) without impacting stdio usage. The release keeps the tool contract identical e adiciona flags de hospedagem remota, limites de concorrência e controles de heartbeat/timeout.
 
 ## Build, Test, and Development Commands
 Try to run tests with elevated priviledges (not sudo)

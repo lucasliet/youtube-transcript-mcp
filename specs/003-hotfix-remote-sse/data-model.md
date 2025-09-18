@@ -4,21 +4,25 @@
 
 ### MCP TypeScript SDK Integration
 ```typescript
-// Primary transport for modern clients (Streamable HTTP)
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-
-// Legacy transport for backwards compatibility
+// Consolidated transport for SSE (GET stream) + POST routing
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 
-// Core MCP server
+// Core MCP server wrapper
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 ```
 
 ### Transport Management Entity
 ```typescript
+interface TrackedTransport {
+  sessionId: string
+  transport: SSEServerTransport
+  response: ServerResponse
+  createdAt: number
+  lastActivity: number
+}
+
 interface TransportRegistry {
-  streamable: Record<string, StreamableHTTPServerTransport>  // Modern clients
-  sse: Record<string, SSEServerTransport>                   // Legacy clients
+  active: Map<string, TrackedTransport>
 }
 
 interface SDKSessionConfig {
@@ -36,7 +40,7 @@ interface SDKSessionConfig {
 // SDK-managed session state
 interface SessionState {
   id: string                    // UUID session identifier (SDK-generated)
-  transport: StreamableHTTPServerTransport | SSEServerTransport
+  transport: SSEServerTransport
   state: SessionStateEnum       // Current lifecycle state
   protocolVersion: string       // MCP protocol version (2025-06-18)
   clientCapabilities: object    // Client capabilities from initialize
@@ -204,9 +208,8 @@ interface MCPErrorResponse {
 ```typescript
 // SDK provides built-in backwards compatibility
 interface BackwardsCompatibilityConfig {
-  streamableHttp: StreamableHTTPServerTransport  // Modern protocol (2025-03-26)
-  sse: SSEServerTransport                        // Legacy protocol (2024-11-05)
-  dualEndpointSupport: boolean                   // Support both transport types
+  sse: SSEServerTransport                        // Consolidated protocol transport
+  allowLegacyEndpoints: boolean                  // Whether to respond to legacy endpoints with migration guidance
 }
 
 interface LegacyEndpointResponse {
@@ -217,14 +220,14 @@ interface LegacyEndpointResponse {
       oldEndpoint: string
       newEndpoint: '/mcp'
       method: 'GET' | 'POST'
-      sdkTransport: 'StreamableHTTP' | 'SSE'    // SDK transport recommendation
+      sdkTransport: 'SSE'                      // Recommended SDK transport
     }
   }
 }
 ```
 
 ### SDK Migration Guidance Rules
-- GET /mcp/events → GET /mcp with StreamableHTTPServerTransport or SSEServerTransport
+- GET /mcp/events → GET /mcp with SSEServerTransport (event-stream)
 - POST /mcp/messages → POST /mcp with SDK transport.handleRequest()
 - Custom envelope format → SDK direct JSON-RPC processing
 - connectionId parameter → SDK-managed Mcp-Session-Id header

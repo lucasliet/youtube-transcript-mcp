@@ -98,8 +98,24 @@ export function logMcpProtocol(event, details = {}) {
  * @param message Error message
  */
 export function logError(category, message) {
-  // Map legacy categories to SDK categories when possible
-  const sdkCategory = SDK_ERROR_CATEGORIES[category.toUpperCase()] || SDK_ERROR_CATEGORIES.SDK_ERROR
+  const legacyKey = String(category || '').toLowerCase()
+  const legacyToSdk = {
+    invalid_url: SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
+    invalid_request: SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
+    inaccessible: SDK_ERROR_CATEGORIES.LEGACY_COMPATIBILITY,
+    no_captions: SDK_ERROR_CATEGORIES.SDK_ERROR,
+    network_error: SDK_ERROR_CATEGORIES.SSE_CONNECTION,
+    tool_error: SDK_ERROR_CATEGORIES.SDK_ERROR,
+    other_error: SDK_ERROR_CATEGORIES.SDK_ERROR,
+    timeout: SDK_ERROR_CATEGORIES.SDK_TIMEOUT,
+    legacy_endpoint: SDK_ERROR_CATEGORIES.LEGACY_ENDPOINT,
+    legacy_compatibility: SDK_ERROR_CATEGORIES.LEGACY_COMPATIBILITY,
+    session_invalid: SDK_ERROR_CATEGORIES.SESSION_INVALID,
+    session_expired: SDK_ERROR_CATEGORIES.SESSION_EXPIRED,
+    session_missing: SDK_ERROR_CATEGORIES.SESSION_MISSING
+  }
+
+  const sdkCategory = legacyToSdk[legacyKey] || SDK_ERROR_CATEGORIES.SDK_ERROR
   logSdkError(sdkCategory, message)
 }
 

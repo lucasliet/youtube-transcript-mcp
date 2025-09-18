@@ -1,16 +1,23 @@
-import { describe, it } from 'node:test'
+import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert'
 import { SdkTransportRegistry } from '../../src/server/sdk-transport-registry.js'
 import { createSdkServerConfig, createSdkServer } from '../../src/server/sdk-config.js'
 
 describe('Session Timeout Cleanup Test', () => {
   let registry
+  let server
+
+  before(() => {
+    const config = createSdkServerConfig({ port: 3333 })
+    server = createSdkServer(config)
+    registry = new SdkTransportRegistry(config, server)
+  })
+
+  after(async () => {
+    await registry?.close?.()
+  })
 
   it('should initialize registry for timeout testing', () => {
-    const config = createSdkServerConfig({ port: 3333 })
-    const server = createSdkServer(config)
-    registry = new SdkTransportRegistry(config, server)
-    
     assert(registry, 'Registry should be created')
   })
 
@@ -19,7 +26,7 @@ describe('Session Timeout Cleanup Test', () => {
     const mockTransport = {
       sessionId: 'timeout-session',
       createdAt: Date.now() - 60000, // 1 minute ago
-      close: () => Promise.resolve()
+      transport: { close: () => Promise.resolve() }
     }
     
     registry.activeTransports.set('timeout-session', mockTransport)
@@ -33,29 +40,19 @@ describe('Session Timeout Cleanup Test', () => {
     const timeoutMs = 30000 // 30 seconds
     const currentTime = Date.now()
     
-    const expiredTransport = {
+    registry.activeTransports.set('expired-session', {
       sessionId: 'expired-session',
-      createdAt: currentTime - 60000, // 1 minute ago
-      close: () => Promise.resolve()
-    }
-    
-    const activeTransport = {
+      createdAt: currentTime - 60000,
+      transport: { close: () => Promise.resolve() }
+    })
+    registry.activeTransports.set('active-session', {
       sessionId: 'active-session',
-      createdAt: currentTime - 10000, // 10 seconds ago
-      close: () => Promise.resolve()
-    }
-    
-    registry.activeTransports.set('expired-session', expiredTransport)
-    registry.activeTransports.set('active-session', activeTransport)
-    
-    // Simulate timeout check
-    const expiredSessions = []
-    for (const [sessionId, transport] of registry.activeTransports) {
-      if (currentTime - transport.createdAt > timeoutMs) {
-        expiredSessions.push(sessionId)
-      }
-    }
-    
+      createdAt: currentTime - 10000,
+      transport: { close: () => Promise.resolve() }
+    })
+
+    const expiredSessions = registry.cleanupExpiredSessions(timeoutMs)
+
     assert.equal(expiredSessions.length, 1, 'Should identify one expired session')
     assert.equal(expiredSessions[0], 'expired-session', 'Should identify correct expired session')
   })
@@ -65,31 +62,24 @@ describe('Session Timeout Cleanup Test', () => {
     const timeoutMs = 30000
     const currentTime = Date.now()
     
-    // Add expired session
-    const expiredTransport = {
+    registry.activeTransports.set('cleanup-session', {
       sessionId: 'cleanup-session',
       createdAt: currentTime - 60000,
-      close: () => Promise.resolve()
-    }
-    
-    registry.activeTransports.set('cleanup-session', expiredTransport)
+      transport: { close: () => Promise.resolve() }
+    })
     assert.equal(registry.activeTransports.size, 1, 'Should have session before cleanup')
     
-    // Simulate cleanup
-    for (const [sessionId, transport] of registry.activeTransports) {
-      if (currentTime - transport.createdAt > timeoutMs) {
-        registry.activeTransports.delete(sessionId)
-      }
-    }
+    const expiredSessions = registry.cleanupExpiredSessions(timeoutMs)
     
     assert.equal(registry.activeTransports.size, 0, 'Should cleanup expired sessions')
+    assert.deepEqual(expiredSessions, ['cleanup-session'], 'Should report cleaned sessions')
   })
 
   it('should respect configured timeout values', () => {
     const configWithTimeout = createSdkServerConfig({ port: 3333, requestTimeoutMs: 60000 })
-    
+
     assert.equal(configWithTimeout.requestTimeoutMs, 60000, 'Should respect configured timeout')
-    
+
     const defaultConfig = createSdkServerConfig({ port: 3333 })
     assert.equal(defaultConfig.requestTimeoutMs, 60000, 'Should use default timeout')
   })

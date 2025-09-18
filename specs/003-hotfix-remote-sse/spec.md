@@ -5,7 +5,7 @@
 **Status**: Completed  
 **Input**: User description: "hotfix remote sse Remote SSE MCP mode must support MCP initialize/shutdown lifecycle so IDE clients can connect and spec should capture this requirement, it should be configured as follow on IDE client: \"youtube-transcript-mcp\": { \"type\": \"sse\", \"url\": \"http://localhost:3333/mcp\" } search if we are attending to remote sse mcp specification and if fixes are needed to acomplish it to work, add to constitution: at the end of each implementation, if necessary update AGENTS.md and constitution.md with current project state"
 
-**Analysis Result**: SDK migration required - substituir a implementação customizada pelo @modelcontextprotocol/typescript-sdk para garantir ciclo MCP completo, endpoint remoto consolidado (`/mcp`) via SSE e gerenciamento automático de sessões/erros.
+**Analysis Result**: SDK migration required - substituir a implementação customizada pelo @modelcontextprotocol/sdk para garantir ciclo MCP completo, endpoint remoto consolidado (`/mcp`) via SSE e gerenciamento automático de sessões/erros.
 
 ## Execution Flow (main)
 ```
@@ -84,7 +84,7 @@ An IDE user connects to the youtube-transcript-mcp server via the consolidated M
 - **FR-008**: JSON-RPC contracts MUST be updated to include `initialize` and `shutdown` method schemas with proper request/response structures according to MCP specification.
 - **FR-009**: Session registry MUST track session state transitions and properly clean up connections after `shutdown` to prevent resource leaks and maintain protocol compliance.
 - **FR-010**: IDE configuration MUST use standard MCP SSE format (`type: sse`, `url: http://localhost:3333/mcp`) replacing current non-standard endpoint structure.
-- **FR-011**: Server implementation MUST migrate from custom transport layer to official `@modelcontextprotocol/typescript-sdk` for standards compliance, using `StreamableHTTPServerTransport` for modern clients and `SSEServerTransport` for backwards compatibility with legacy clients.
+- **FR-011**: Server implementation MUST migrate from the custom transport layer to the official `@modelcontextprotocol/sdk`, exposing the consolidated `/mcp` endpoint via `SSEServerTransport` (GET for streams and POST for JSON-RPC) and returning deprecation guidance for legacy `/mcp/events` and `/mcp/messages` callers.
 - **FR-012**: Project documentation MUST update `AGENTS.md` to reflect the endpoint changes from `/mcp/events` + `/mcp/messages` to `/mcp` and document the MCP protocol compliance improvements in project structure and module organization.
 - **FR-013**: Project governance MUST assess if current implementation changes require updates to `constitution.md` and, if necessary, update governance rules to reflect the new MCP protocol compliance requirements and architectural changes.
 - **FR-014**: Project governance MUST add to `constitution.md` the requirement that, at the end of each implementation, contributors must assess whether `AGENTS.md` and `constitution.md` need updates reflecting the current project state and apply them when necessary.

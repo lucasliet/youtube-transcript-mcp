@@ -1,17 +1,25 @@
-import { describe, it } from 'node:test'
+import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert'
 import { SdkTransportRegistry } from '../../src/server/sdk-transport-registry.js'
 import { createSdkServerConfig, createSdkServer } from '../../src/server/sdk-config.js'
 
 describe('Transport Switching Contract', () => {
   let registry
+  let server
+
+  before(() => {
+    const config = createSdkServerConfig({ port: 3333 })
+    server = createSdkServer(config)
+    registry = new SdkTransportRegistry(config, server)
+  })
+
+  after(async () => {
+    await registry?.close?.()
+  })
 
   it('should initialize transport registry', () => {
-    const config = createSdkServerConfig({ port: 3333 })
-    const server = createSdkServer(config)
-    registry = new SdkTransportRegistry(config, server)
-    
     assert(registry, 'Transport registry should be created')
+    assert(registry.activeTransports instanceof Map, 'Should expose active transports map')
   })
 
   it('should handle SSE transport endpoint correctly', () => {
