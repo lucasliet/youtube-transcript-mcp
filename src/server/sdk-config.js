@@ -1,6 +1,6 @@
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { createServerConfig } from './config.js'
-import { Server } from '@modelcontextprotocol/sdk/server/index.js'
+import { McpServer } from './mcp-server.js'
 
 export function createSdkServerConfig(overrides = {}) {
   const baseConfig = createServerConfig({ ...overrides, mode: 'remote' })
@@ -21,7 +21,7 @@ export function createSdkServerConfig(overrides = {}) {
 }
 
 export function createSdkServer(config) {
-  return new Server(config.serverInfo, {
+  return new McpServer(config.serverInfo, {
     capabilities: config.capabilities
   })
 }

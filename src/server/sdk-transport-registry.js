@@ -42,17 +42,12 @@ export class SdkTransportRegistry {
 
         // Handle legacy endpoints for backwards compatibility
         if (req.method === 'GET' && this.isLegacySseEndpoint(req.url)) {
-          try {
-            await this.handleSseConnection(req, res)
-            return
-          } catch (err) {
-            console.error('Legacy SSE connection failed:', err.message)
-            return
-          }
+          this.sendLegacyEndpointDeprecated(res, '/mcp/events', 'GET')
+          return
         }
 
         if (req.method === 'POST' && this.isLegacyMessageEndpoint(req.url)) {
-          await this.handleSsePostMessage(req, res)
+          this.sendLegacyEndpointDeprecated(res, '/mcp/messages', 'POST')
           return
         }
 
@@ -182,6 +177,29 @@ export class SdkTransportRegistry {
   sendError(res, statusCode, message) {
     res.writeHead(statusCode, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({ code: statusCode, message }))
+  }
+
+  /**
+   * Sends a migration guidance response for deprecated legacy endpoints.
+   * @param res Outgoing HTTP response instance.
+   * @param oldEndpoint Deprecated endpoint path accessed by the client.
+   * @param method HTTP method used by the client request.
+   * @returns Void.
+   */
+  sendLegacyEndpointDeprecated(res, oldEndpoint, method) {
+    const message = 'Use ' + method + ' /mcp instead'
+    res.writeHead(404, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({
+      error: {
+        code: 'endpoint_deprecated',
+        message,
+        migration: {
+          oldEndpoint,
+          newEndpoint: '/mcp',
+          method
+        }
+      }
+    }))
   }
 
   async close() {

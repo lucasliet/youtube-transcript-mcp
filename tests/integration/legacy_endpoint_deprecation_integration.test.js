@@ -1,23 +1,45 @@
-import { describe, it } from 'node:test'
+import { after, before, describe, it } from 'node:test'
 import assert from 'node:assert'
 import { SdkTransportRegistry } from '../../src/server/sdk-transport-registry.js'
 import { createSdkServerConfig, createSdkServer } from '../../src/server/sdk-config.js'
+import { registerTranscriptTool } from '../../src/server/register-transcript-tool.js'
 
 describe('Legacy Endpoint Migration', () => {
   let registry
+  let baseUrl
 
-  it('should initialize registry for legacy testing', () => {
-    const config = createSdkServerConfig({ port: 3333 })
+  before(async () => {
+    const config = createSdkServerConfig({ port: 0, host: '127.0.0.1' })
     const server = createSdkServer(config)
+    registerTranscriptTool(server)
     registry = new SdkTransportRegistry(config, server)
-    
-    assert(registry, 'Registry should be created')
+    const info = await registry.start()
+    baseUrl = info.baseUrl
   })
 
-  it('should detect legacy endpoints', () => {
-    assert.equal(registry.isLegacySseEndpoint('/mcp/events'), true, 'Should detect legacy /mcp/events')
-    assert.equal(registry.isLegacyMessageEndpoint('/mcp/messages'), true, 'Should detect legacy /mcp/messages')
-    assert.equal(registry.isMcpEndpoint('/mcp'), true, 'Should detect new /mcp endpoint')
-    console.log('Legacy endpoint detection working')
+  after(async () => {
+    await registry.close()
+  })
+
+  it('should return migration guidance for legacy SSE endpoint', async () => {
+    const response = await fetch(baseUrl + '/mcp/events', { headers: { Accept: 'text/event-stream' } })
+    assert.equal(response.status, 404, 'Legacy SSE endpoint should return 404')
+    const payload = await response.json()
+    assert.equal(payload.error.code, 'endpoint_deprecated', 'Should mark endpoint as deprecated')
+    assert.equal(payload.error.migration.oldEndpoint, '/mcp/events', 'Migration guidance should include old endpoint')
+    assert.equal(payload.error.migration.newEndpoint, '/mcp', 'Migration guidance should include new endpoint')
+  })
+
+  it('should return migration guidance for legacy message endpoint', async () => {
+    const response = await fetch(baseUrl + '/mcp/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    })
+    assert.equal(response.status, 404, 'Legacy message endpoint should return 404')
+    const payload = await response.json()
+    assert.equal(payload.error.code, 'endpoint_deprecated', 'Should mark endpoint as deprecated')
+    assert.equal(payload.error.migration.oldEndpoint, '/mcp/messages', 'Migration guidance should include old endpoint')
+    assert.equal(payload.error.migration.method, 'POST', 'Migration guidance should specify HTTP method')
   })
 })
