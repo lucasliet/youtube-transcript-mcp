@@ -147,7 +147,16 @@ export class SdkTransportRegistry {
         transport,
         response: res,
         createdAt: Date.now(),
-        lastActivity: Date.now()
+        lastActivity: null
+      }
+
+      const originalSend = transport.send.bind(transport)
+      transport.send = async (message) => {
+        try {
+          return await originalSend(message)
+        } finally {
+          tracked.lastActivity = null
+        }
       }
 
       this.activeTransports.set(sessionId, tracked)
@@ -186,8 +195,16 @@ export class SdkTransportRegistry {
       return
     }
 
-    tracked.lastActivity = Date.now()
-    await tracked.transport.handlePostMessage(req, res)
+    const activityTimestamp = Date.now()
+    try {
+      await tracked.transport.handlePostMessage(req, res)
+    } finally {
+      if (res.statusCode === 202) {
+        tracked.lastActivity = activityTimestamp
+      } else {
+        tracked.lastActivity = null
+      }
+    }
   }
 
   extractSessionId(req) {
@@ -271,7 +288,7 @@ export class SdkTransportRegistry {
       res.write('event: heartbeat\n')
       res.write('data: ' + JSON.stringify(payload) + '\n\n')
 
-      if (Date.now() - tracked.lastActivity > timeout) {
+      if (typeof tracked.lastActivity === 'number' && Date.now() - tracked.lastActivity > timeout) {
         logSdkError(SDK_ERROR_CATEGORIES.SDK_TIMEOUT, 'Session timed out', undefined, { sessionId })
         const errorPayload = {
           code: 'timeout',
