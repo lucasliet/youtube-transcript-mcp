@@ -5,7 +5,10 @@ const DEFAULTS = {
   cors: false,
   heartbeatIntervalMs: 25000,
   requestTimeoutMs: 60000,
-  maxClients: 10
+  maxClients: 10,
+  allowedOrigins: undefined,
+  allowedHosts: undefined,
+  enableDnsRebindingProtection: false
 }
 
 function toNumber(value) {
@@ -54,6 +57,36 @@ function normalizeOverrides(overrides) {
   } else if (out.cors !== undefined && out.cors !== null) {
     out.cors = String(out.cors)
   }
+
+  if (out.allowedOrigins !== undefined && out.allowedOrigins !== null) {
+    if (Array.isArray(out.allowedOrigins)) {
+      out.allowedOrigins = out.allowedOrigins.map((origin) => String(origin).trim()).filter(Boolean)
+    } else if (typeof out.allowedOrigins === 'string') {
+      out.allowedOrigins = out.allowedOrigins.split(',').map((origin) => origin.trim()).filter(Boolean)
+    }
+    if (Array.isArray(out.allowedOrigins) && out.allowedOrigins.length === 0) {
+      out.allowedOrigins = undefined
+    }
+  }
+
+  if (out.allowedHosts !== undefined && out.allowedHosts !== null) {
+    if (Array.isArray(out.allowedHosts)) {
+      out.allowedHosts = out.allowedHosts.map((host) => String(host).trim()).filter(Boolean)
+    } else if (typeof out.allowedHosts === 'string') {
+      out.allowedHosts = out.allowedHosts.split(',').map((host) => host.trim()).filter(Boolean)
+    }
+    if (Array.isArray(out.allowedHosts) && out.allowedHosts.length === 0) {
+      out.allowedHosts = undefined
+    }
+  }
+
+  if (out.enableDnsRebindingProtection !== undefined) {
+    if (out.enableDnsRebindingProtection === true || out.enableDnsRebindingProtection === 'true') {
+      out.enableDnsRebindingProtection = true
+    } else if (out.enableDnsRebindingProtection === false || out.enableDnsRebindingProtection === 'false') {
+      out.enableDnsRebindingProtection = false
+    }
+  }
   return out
 }
 
@@ -78,5 +111,34 @@ function validateConfig(config) {
   }
   if (!Number.isInteger(config.maxClients) || config.maxClients <= 0) {
     throw new Error('invalid maxClients')
+  }
+  if (config.allowedOrigins !== undefined && config.allowedOrigins !== null) {
+    if (!Array.isArray(config.allowedOrigins)) {
+      throw new Error('invalid allowedOrigins')
+    }
+    if (config.allowedOrigins.length === 0) {
+      throw new Error('invalid allowedOrigins')
+    }
+    for (const origin of config.allowedOrigins) {
+      if (typeof origin !== 'string' || origin.length === 0) {
+        throw new Error('invalid allowedOrigins')
+      }
+    }
+  }
+  if (config.allowedHosts !== undefined && config.allowedHosts !== null) {
+    if (!Array.isArray(config.allowedHosts)) {
+      throw new Error('invalid allowedHosts')
+    }
+    if (config.allowedHosts.length === 0) {
+      throw new Error('invalid allowedHosts')
+    }
+    for (const host of config.allowedHosts) {
+      if (typeof host !== 'string' || host.length === 0) {
+        throw new Error('invalid allowedHosts')
+      }
+    }
+  }
+  if (typeof config.enableDnsRebindingProtection !== 'boolean') {
+    throw new Error('invalid enableDnsRebindingProtection')
   }
 }

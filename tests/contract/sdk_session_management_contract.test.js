@@ -62,7 +62,7 @@ describe('SDK Session Management Contract', () => {
   })
 
   it('should manage active transport tracking', () => {
-    const wrapper = { sessionId: 'session-1', createdAt: Date.now(), transport: { close: () => Promise.resolve() } }
+    const wrapper = { type: 'streamable', sessionId: 'session-1', createdAt: Date.now(), transport: { close: () => Promise.resolve() } }
     registry.activeTransports.set('session-1', wrapper)
 
     assert.equal(registry.activeTransports.size, 1, 'Should track active transport')

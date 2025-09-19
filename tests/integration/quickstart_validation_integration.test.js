@@ -3,6 +3,7 @@ import assert from 'node:assert'
 import { createSdkServerConfig, createSdkServer } from '../../src/server/sdk-config.js'
 import { SdkTransportRegistry } from '../../src/server/sdk-transport-registry.js'
 import { registerTranscriptTool } from '../../src/server/register-transcript-tool.js'
+import { skipIfCannotBindLoopback } from '../helpers/env.js'
 
 const PROTOCOL_VERSION = '2025-06-18'
 
@@ -10,7 +11,8 @@ describe('Quickstart Validation Scenarios', () => {
   let registry
   let baseUrl
 
-  before(async () => {
+  before(async (t) => {
+    if (!await skipIfCannotBindLoopback(t)) return
     const config = createSdkServerConfig({ port: 0, host: '127.0.0.1' })
     const server = createSdkServer(config)
     registerTranscriptTool(server)
@@ -20,7 +22,9 @@ describe('Quickstart Validation Scenarios', () => {
   })
 
   after(async () => {
-    await registry.close()
+    if (registry) {
+      await registry.close()
+    }
   })
 
   it('should expose SSE endpoint and session identifier', async () => {

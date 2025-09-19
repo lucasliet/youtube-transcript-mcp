@@ -13,6 +13,11 @@ describe('SDK Configuration Unit Tests', () => {
     assert.equal(config.heartbeatIntervalMs, 25000, 'Should use default heartbeat')
     assert.equal(config.requestTimeoutMs, 60000, 'Should use default timeout')
     assert.equal(config.maxClients, 10, 'Should use default max clients')
+    assert.equal('streamable' in config.transports, true, 'Should expose streamable transport key')
+    assert.ok(config.transports.sse, 'Should expose SSE transport')
+    assert.equal(config.enableDnsRebindingProtection, false, 'Should disable DNS rebinding protection by default')
+    assert.equal(config.allowedHosts, undefined, 'Should not set allowed hosts by default')
+    assert.equal(config.allowedOrigins, undefined, 'Should not set allowed origins by default')
   })
 
   it('should override configuration values', () => {
@@ -22,7 +27,10 @@ describe('SDK Configuration Unit Tests', () => {
       cors: '*',
       heartbeatIntervalMs: 30000,
       requestTimeoutMs: 120000,
-      maxClients: 5
+      maxClients: 5,
+      allowedOrigins: ['https://example.com'],
+      allowedHosts: '127.0.0.1',
+      enableDnsRebindingProtection: true
     }
     
     const config = createSdkServerConfig(overrides)
@@ -33,6 +41,9 @@ describe('SDK Configuration Unit Tests', () => {
     assert.equal(config.heartbeatIntervalMs, 30000, 'Should override heartbeat')
     assert.equal(config.requestTimeoutMs, 120000, 'Should override timeout')
     assert.equal(config.maxClients, 5, 'Should override max clients')
+    assert.deepEqual(config.allowedOrigins, ['https://example.com'], 'Should normalize allowed origins list')
+    assert.deepEqual(config.allowedHosts, ['127.0.0.1'], 'Should normalize allowed hosts list')
+    assert.equal(config.enableDnsRebindingProtection, true, 'Should enable DNS rebinding protection when requested')
   })
 
   it('should validate configuration constraints', () => {
@@ -48,6 +59,9 @@ describe('SDK Configuration Unit Tests', () => {
     assert.throws(() => createSdkServerConfig({ heartbeatIntervalMs: 0 }), 'Should reject zero heartbeat')
     assert.throws(() => createSdkServerConfig({ requestTimeoutMs: -1000 }), 'Should reject negative timeout')
     assert.throws(() => createSdkServerConfig({ maxClients: 0 }), 'Should reject zero max clients')
+    assert.throws(() => createSdkServerConfig({ allowedOrigins: 123 }), 'Should reject invalid allowed origins')
+    assert.throws(() => createSdkServerConfig({ allowedHosts: 42 }), 'Should reject invalid allowed hosts')
+    assert.throws(() => createSdkServerConfig({ enableDnsRebindingProtection: 'invalid' }), 'Should reject invalid DNS rebinding flag')
   })
 
   it('should handle CORS configuration correctly', () => {

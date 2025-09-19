@@ -1,16 +1,19 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { startRemoteServer } from '../helpers/remoteFixtures.js'
+import { skipIfCannotBindLoopback } from '../helpers/env.js'
 
 const noop = async () => {}
 
 test('integration: rejects connections beyond maxClients', async (t) => {
+  if (!await skipIfCannotBindLoopback(t)) return
   const server = await startRemoteServer({ port: 0, maxClients: 1 })
+  const controllerA = new AbortController()
   t.after(async () => {
+    controllerA.abort()
     await server.close().catch(noop)
   })
 
-  const controllerA = new AbortController()
   const responseA = await globalThis.fetch(`${server.baseUrl}/mcp`, {
     headers: {
       Accept: 'text/event-stream',
@@ -18,7 +21,6 @@ test('integration: rejects connections beyond maxClients', async (t) => {
     },
     signal: controllerA.signal
   })
-  t.after(() => controllerA.abort())
   assert.equal(responseA.status, 200, 'First client should establish SSE stream')
 
   const responseB = await globalThis.fetch(`${server.baseUrl}/mcp`, {

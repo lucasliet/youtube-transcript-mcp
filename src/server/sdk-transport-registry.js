@@ -1,7 +1,47 @@
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import http from 'node:http'
 import { once } from 'node:events'
+import { randomUUID } from 'node:crypto'
 import { logSdkError, logSdkTransport, SDK_ERROR_CATEGORIES } from '../lib/log.js'
+
+const STREAMABLE_MODULE_PATHS = [
+  '@modelcontextprotocol/sdk/server/streamableHttp.js',
+  '@modelcontextprotocol/sdk/server/streamable-http.js',
+  '@modelcontextprotocol/sdk/dist/server/streamableHttp.js',
+  '@modelcontextprotocol/sdk/dist/server/streamable-http.js'
+]
+
+const SUPPORTED_PROTOCOL_VERSION = '2025-06-18'
+
+let streamableTransportPromise
+
+async function loadStreamableHTTPServerTransport() {
+  if (streamableTransportPromise === undefined) {
+    streamableTransportPromise = (async () => {
+      for (const specifier of STREAMABLE_MODULE_PATHS) {
+        try {
+          const module = await import(specifier)
+          if (module && module.StreamableHTTPServerTransport) {
+            return module.StreamableHTTPServerTransport
+          }
+        } catch (error) {
+          const message = typeof error === 'object' && error !== null ? String(error.message || error) : String(error)
+          if (error?.code !== 'ERR_MODULE_NOT_FOUND' && !message.includes('Cannot find module')) {
+            throw error
+          }
+        }
+      }
+      return null
+    })()
+  }
+  return streamableTransportPromise
+}
+
+function isInitializeRequestBody(body) {
+  if (!body || typeof body !== 'object') return false
+  if (body.method !== 'initialize') return false
+  return true
+}
 
 export class SdkTransportRegistry {
   constructor(config, server) {
@@ -16,32 +56,39 @@ export class SdkTransportRegistry {
     this.httpServer = http.createServer(async (req, res) => {
       try {
         this.setupCorsHeaders(res)
-        
+
         if (req.method === 'OPTIONS') {
           res.writeHead(204)
           res.end()
           return
         }
 
-        // Consolidated /mcp endpoint supporting SSE transport
-        if (req.method === 'GET' && this.isMcpEndpoint(req.url)) {
-          try {
+        if (this.isMcpEndpoint(req.url)) {
+          if (req.method === 'GET') {
+            const sessionId = this.extractSessionId(req)
+            if (sessionId) {
+              await this.handleStreamableGet(sessionId, req, res)
+              return
+            }
             await this.handleSseConnection(req, res)
             return
-          } catch (err) {
-            console.error('SSE connection failed:', err.message)
-            // Don't send error response - transport may have started
+          }
+
+          if (req.method === 'POST') {
+            await this.handleMcpPost(req, res)
             return
           }
-        }
 
-        // Handle POST messages for SSE transport
-        if (req.method === 'POST' && this.isMcpEndpoint(req.url)) {
-          await this.handleSsePostMessage(req, res)
+          if (req.method === 'DELETE') {
+            await this.handleStreamableDelete(req, res)
+            return
+          }
+
+          res.writeHead(405, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ code: 'method_not_allowed', message: 'Method Not Allowed' }))
           return
         }
 
-        // Handle legacy endpoints for backwards compatibility
         if (req.method === 'GET' && this.isLegacySseEndpoint(req.url)) {
           this.sendLegacyEndpointDeprecated(res, '/mcp/events', 'GET')
           return
@@ -63,7 +110,7 @@ export class SdkTransportRegistry {
     this.httpServer.keepAliveTimeout = this.config.requestTimeoutMs * 2
     this.httpServer.headersTimeout = this.config.requestTimeoutMs * 2
     this.httpServer.listen({ port: this.config.port, host: this.config.host })
-    
+
     if (this.httpServer.listening === false) {
       await once(this.httpServer, 'listening')
     }
@@ -79,8 +126,8 @@ export class SdkTransportRegistry {
     if (this.config.cors) {
       const origin = this.config.cors === true ? '*' : this.config.cors
       res.setHeader('Access-Control-Allow-Origin', origin)
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, Mcp-Session-Id, X-Session-Id')
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, Mcp-Session-Id, X-Session-Id, MCP-Protocol-Version')
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
       res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id')
       
       if (origin !== '*' && !this.isAllowedOrigin(origin)) {
@@ -122,9 +169,61 @@ export class SdkTransportRegistry {
     return pathname === '/mcp/messages'
   }
 
+  /**
+   * Extracts the MCP protocol version header from the incoming request.
+   * @param req Incoming HTTP request instance.
+   * @returns Normalized protocol version string or undefined when missing.
+   */
+  getProtocolVersionHeader(req) {
+    const raw = req?.headers?.['mcp-protocol-version']
+    if (raw === undefined || raw === null) {
+      return undefined
+    }
+    const value = Array.isArray(raw) ? raw[0] : raw
+    if (value === undefined || value === null) {
+      return undefined
+    }
+    const normalized = String(value).trim()
+    return normalized.length > 0 ? normalized : undefined
+  }
+
+  /**
+   * Validates whether the MCP protocol version header matches the supported version.
+   * @param req Incoming HTTP request instance.
+   * @param res Outgoing HTTP response used to report validation failures.
+   * @returns True when the request may proceed, false when the response was sent.
+   */
+  validateProtocolVersion(req, res) {
+    const version = this.getProtocolVersionHeader(req)
+    if (!version || version === SUPPORTED_PROTOCOL_VERSION) {
+      return true
+    }
+
+    logSdkError(
+      SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
+      'Unsupported MCP protocol version: ' + version,
+      undefined,
+      { version, supported: SUPPORTED_PROTOCOL_VERSION }
+    )
+
+    res.writeHead(400, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({
+      error: {
+        code: 'invalid_protocol_version',
+        message: 'Unsupported MCP protocol version',
+        supported: SUPPORTED_PROTOCOL_VERSION
+      }
+    }))
+    return false
+  }
+
   async handleSseConnection(req, res) {
     try {
-      if (this.activeTransports.size >= this.config.maxClients) {
+      if (!this.validateProtocolVersion(req, res)) {
+        return
+      }
+
+      if (this.isAtCapacity()) {
         res.writeHead(429, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({
           error: {
@@ -143,6 +242,7 @@ export class SdkTransportRegistry {
 
       const sessionId = transport.sessionId
       const tracked = {
+        type: 'sse',
         sessionId,
         transport,
         response: res,
@@ -179,31 +279,199 @@ export class SdkTransportRegistry {
     }
   }
 
-  async handleSsePostMessage(req, res) {
-    // Find the transport by session ID from the request
+  async handleMcpPost(req, res) {
+    if (!this.validateProtocolVersion(req, res)) {
+      return
+    }
     const sessionId = this.extractSessionId(req)
-    if (!sessionId) {
+
+    if (sessionId) {
+      const tracked = this.activeTransports.get(sessionId)
+      if (!tracked) {
+        res.writeHead(404, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'Session not found' }))
+        return
+      }
+
+      if (tracked.type === 'streamable') {
+        const body = await this.readJsonBody(req)
+        if (body === undefined) {
+          this.sendError(res, 400, 'Invalid JSON body')
+          return
+        }
+
+        try {
+          await tracked.transport.handleRequest(req, res, body)
+        } finally {
+          tracked.lastActivity = Date.now()
+        }
+        return
+      }
+
+      const activityTimestamp = Date.now()
+      try {
+        await tracked.transport.handlePostMessage(req, res)
+      } finally {
+        if (res.statusCode === 202) {
+          tracked.lastActivity = activityTimestamp
+        } else {
+          tracked.lastActivity = null
+        }
+      }
+      return
+    }
+
+    const body = await this.readJsonBody(req)
+    if (body === undefined) {
+      this.sendError(res, 400, 'Invalid JSON body')
+      return
+    }
+
+    if (!isInitializeRequestBody(body)) {
       res.writeHead(400, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ error: 'Missing session ID' }))
       return
     }
-    
-    const tracked = this.activeTransports.get(sessionId)
-    if (!tracked) {
-      res.writeHead(404, { 'Content-Type': 'application/json' })
-      res.end(JSON.stringify({ error: 'Session not found' }))
+
+    if (this.isAtCapacity()) {
+      res.writeHead(429, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({
+        error: {
+          code: 'too_many_clients',
+          message: 'Maximum number of clients reached'
+        }
+      }))
       return
     }
 
-    const activityTimestamp = Date.now()
-    try {
-      await tracked.transport.handlePostMessage(req, res)
-    } finally {
-      if (res.statusCode === 202) {
-        tracked.lastActivity = activityTimestamp
-      } else {
-        tracked.lastActivity = null
+    await this.createStreamableSession(req, res, body)
+  }
+
+  async createStreamableSession(req, res, body) {
+    const StreamableHTTPServerTransport = await loadStreamableHTTPServerTransport()
+    if (!StreamableHTTPServerTransport) {
+      res.writeHead(501, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({
+        error: {
+          code: 'streamable_unavailable',
+          message: 'Streamable HTTP transport is not available. Establish an SSE session with GET /mcp instead.'
+        }
+      }))
+      return
+    }
+
+    const tracked = {
+      type: 'streamable',
+      sessionId: undefined,
+      transport: undefined,
+      createdAt: Date.now(),
+      lastActivity: Date.now()
+    }
+
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+      onsessioninitialized: (id) => {
+        tracked.sessionId = id
+        this.activeTransports.set(id, tracked)
+        logSdkTransport('streamable_connection_established', { sessionId: id, type: 'streamable' })
+      },
+      enableDnsRebindingProtection: this.config.enableDnsRebindingProtection === true,
+      allowedHosts: this.config.allowedHosts,
+      allowedOrigins: this.config.allowedOrigins
+    })
+
+    tracked.transport = transport
+
+    transport.onclose = () => {
+      if (tracked.sessionId) {
+        this.activeTransports.delete(tracked.sessionId)
       }
+    }
+
+    await this.server.connect(transport)
+
+    try {
+      await transport.handleRequest(req, res, body)
+      tracked.lastActivity = Date.now()
+    } catch (err) {
+      if (tracked.sessionId) {
+        this.activeTransports.delete(tracked.sessionId)
+      }
+      transport.close?.().catch(() => {})
+      throw err
+    }
+
+    if (!tracked.sessionId && transport.sessionId) {
+      tracked.sessionId = transport.sessionId
+      this.activeTransports.set(transport.sessionId, tracked)
+      logSdkTransport('streamable_connection_established', { sessionId: transport.sessionId, type: 'streamable' })
+    }
+  }
+
+  async handleStreamableGet(sessionId, req, res) {
+    if (!this.validateProtocolVersion(req, res)) {
+      return
+    }
+    const tracked = this.activeTransports.get(sessionId)
+    if (!tracked || tracked.type !== 'streamable') {
+      this.sendError(res, 404, 'Session not found')
+      return
+    }
+
+    try {
+      await tracked.transport.handleRequest(req, res)
+    } finally {
+      tracked.lastActivity = Date.now()
+    }
+  }
+
+  async handleStreamableDelete(req, res) {
+    if (!this.validateProtocolVersion(req, res)) {
+      return
+    }
+    const sessionId = this.extractSessionId(req)
+    if (!sessionId) {
+      this.sendError(res, 400, 'Missing session ID')
+      return
+    }
+
+    const tracked = this.activeTransports.get(sessionId)
+    if (!tracked || tracked.type !== 'streamable') {
+      this.sendError(res, 404, 'Session not found')
+      return
+    }
+
+    try {
+      await tracked.transport.handleRequest(req, res)
+    } finally {
+      tracked.lastActivity = Date.now()
+    }
+  }
+
+  isAtCapacity() {
+    return this.activeTransports.size >= this.config.maxClients
+  }
+
+  async readJsonBody(req) {
+    const chunks = []
+    for await (const chunk of req) {
+      chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
+    }
+
+    if (chunks.length === 0) {
+      return undefined
+    }
+
+    const raw = Buffer.concat(chunks).toString('utf8').trim()
+    if (!raw) {
+      return undefined
+    }
+
+    try {
+      return JSON.parse(raw)
+    } catch (err) {
+      logSdkError(SDK_ERROR_CATEGORIES.MCP_PROTOCOL, 'Failed to parse JSON body', undefined, { error: err?.message })
+      return undefined
     }
   }
 

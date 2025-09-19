@@ -24,6 +24,7 @@ describe('Session Timeout Cleanup Test', () => {
   it('should track session creation timestamps', () => {
     registry.activeTransports.clear()
     const mockTransport = {
+      type: 'streamable',
       sessionId: 'timeout-session',
       createdAt: Date.now() - 60000, // 1 minute ago
       transport: { close: () => Promise.resolve() }
@@ -41,11 +42,13 @@ describe('Session Timeout Cleanup Test', () => {
     const currentTime = Date.now()
     
     registry.activeTransports.set('expired-session', {
+      type: 'streamable',
       sessionId: 'expired-session',
       createdAt: currentTime - 60000,
       transport: { close: () => Promise.resolve() }
     })
     registry.activeTransports.set('active-session', {
+      type: 'streamable',
       sessionId: 'active-session',
       createdAt: currentTime - 10000,
       transport: { close: () => Promise.resolve() }
@@ -63,6 +66,7 @@ describe('Session Timeout Cleanup Test', () => {
     const currentTime = Date.now()
     
     registry.activeTransports.set('cleanup-session', {
+      type: 'streamable',
       sessionId: 'cleanup-session',
       createdAt: currentTime - 60000,
       transport: { close: () => Promise.resolve() }

@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { Readable } from 'node:stream'
 import { startRemoteServer } from '../helpers/remoteFixtures.js'
+import { skipIfCannotBindLoopback } from '../helpers/env.js'
 
 const noop = async () => {}
 
@@ -12,6 +13,7 @@ function mkResponse(status, body, contentType = 'text/html') {
 const PROTOCOL_VERSION = '2025-06-18'
 
 test('integration: heartbeat emits and timeouts trigger error', async (t) => {
+  if (!await skipIfCannotBindLoopback(t)) return
   const originalFetch = globalThis.fetch
   globalThis.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : String(input?.url || '')

@@ -3,12 +3,14 @@ import assert from 'node:assert'
 import { SdkTransportRegistry } from '../../src/server/sdk-transport-registry.js'
 import { createSdkServerConfig, createSdkServer } from '../../src/server/sdk-config.js'
 import { registerTranscriptTool } from '../../src/server/register-transcript-tool.js'
+import { skipIfCannotBindLoopback } from '../helpers/env.js'
 
 describe('Legacy Endpoint Migration', () => {
   let registry
   let baseUrl
 
-  before(async () => {
+  before(async (t) => {
+    if (!await skipIfCannotBindLoopback(t)) return
     const config = createSdkServerConfig({ port: 0, host: '127.0.0.1' })
     const server = createSdkServer(config)
     registerTranscriptTool(server)
@@ -18,7 +20,9 @@ describe('Legacy Endpoint Migration', () => {
   })
 
   after(async () => {
-    await registry.close()
+    if (registry) {
+      await registry.close()
+    }
   })
 
   it('should return migration guidance for legacy SSE endpoint', async () => {
