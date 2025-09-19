@@ -40,7 +40,7 @@ describe('SDK Integration Contract', () => {
 
     // Server should be initialized with correct capabilities
     assert.equal(testConfig.serverInfo.name, 'youtube-transcript-mcp', 'Server name should match')
-    assert.equal(testConfig.serverInfo.version, '2.0.1', 'Server version should match')
+    assert.equal(testConfig.serverInfo.version, '2.0.2', 'Server version should match')
     assert(testConfig.capabilities.tools, 'Should have tools capability')
     assert(testServer.setRequestHandler, 'Should expose request handler registration')
 

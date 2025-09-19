@@ -36,7 +36,7 @@ describe('SDK State Transitions Validation', () => {
     const config = createSdkServerConfig({ port: 3333 })
     
     assert.equal(config.serverInfo.name, 'youtube-transcript-mcp', 'Server name should be consistent')
-    assert.equal(config.serverInfo.version, '2.0.1', 'Server version should be consistent')
+    assert.equal(config.serverInfo.version, '2.0.2', 'Server version should be consistent')
     assert(config.capabilities.tools, 'Server capabilities should include tools')
     
     console.log('Server info state consistency validated')
@@ -46,7 +46,7 @@ describe('SDK State Transitions Validation', () => {
     const config = createSdkServerConfig({ port: 3333 })
     
     // Protocol version should be consistent across configurations
-    assert.equal(config.serverInfo.version, '2.0.1', 'Should maintain protocol version consistency')
+    assert.equal(config.serverInfo.version, '2.0.2', 'Should maintain protocol version consistency')
     
     console.log('Protocol version state validated')
   })

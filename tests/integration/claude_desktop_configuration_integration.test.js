@@ -11,7 +11,7 @@ describe('Claude Desktop Configuration Test', () => {
     
     // Validate configuration structure for Claude Desktop
     assert.equal(config.serverInfo.name, 'youtube-transcript-mcp', 'Should have correct server name')
-    assert.equal(config.serverInfo.version, '2.0.1', 'Should have correct version')
+    assert.equal(config.serverInfo.version, '2.0.2', 'Should have correct version')
     assert(registry.isMcpEndpoint('/mcp'), 'Should support /mcp endpoint')
     
     console.log('Claude Desktop configuration format validated')

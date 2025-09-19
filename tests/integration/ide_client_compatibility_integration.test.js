@@ -11,7 +11,7 @@ describe('IDE Client Compatibility', () => {
 
     // Validate configuration for Claude Desktop
     assert.equal(config.serverInfo.name, 'youtube-transcript-mcp', 'Should have correct server name for Claude')
-    assert.equal(config.serverInfo.version, '2.0.1', 'Should have version')
+    assert.equal(config.serverInfo.version, '2.0.2', 'Should have version')
     assert(config.capabilities.tools, 'Should have tools capability')
     assert(typeof registry.start === 'function', 'Should expose start method for SSE transport')
 

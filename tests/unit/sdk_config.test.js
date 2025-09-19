@@ -84,6 +84,6 @@ describe('SDK Configuration Unit Tests', () => {
     
     assert.deepEqual(config1.serverInfo, config2.serverInfo, 'Server info should be consistent across configs')
     assert.equal(config1.serverInfo.name, 'youtube-transcript-mcp', 'Should have correct server name')
-    assert.equal(config1.serverInfo.version, '2.0.1', 'Should have correct server version')
+    assert.equal(config1.serverInfo.version, '2.0.2', 'Should have correct server version')
   })
 })

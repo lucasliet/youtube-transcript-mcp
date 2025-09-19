@@ -26,7 +26,7 @@ describe('SDK Error Handling Contract', () => {
 
   it('should validate MCP protocol compliance', () => {
     assert.equal(config.serverInfo.name, 'youtube-transcript-mcp', 'Should have MCP-compliant server name')
-    assert.equal(config.serverInfo.version, '2.0.1', 'Should have version')
+    assert.equal(config.serverInfo.version, '2.0.2', 'Should have version')
     assert(config.capabilities.tools, 'Should advertise tools capability')
     
     console.log('MCP protocol compliance validated')

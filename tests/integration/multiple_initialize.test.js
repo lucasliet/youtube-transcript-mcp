@@ -79,7 +79,7 @@ describe('Multiple Initialize Attempts Test', () => {
     
     // Server state should remain consistent
     assert.equal(config.serverInfo.name, 'youtube-transcript-mcp', 'Server name should remain consistent')
-    assert.equal(config.serverInfo.version, '2.0.1', 'Server version should remain consistent')
+    assert.equal(config.serverInfo.version, '2.0.2', 'Server version should remain consistent')
     assert(config.capabilities.tools, 'Server capabilities should remain consistent')
   })
 })

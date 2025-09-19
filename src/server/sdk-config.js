@@ -12,7 +12,7 @@ export function createSdkServerConfig(overrides = {}) {
     },
     serverInfo: {
       name: 'youtube-transcript-mcp',
-      version: '2.0.1'
+      version: '2.0.2'
     },
     capabilities: {
       tools: {}

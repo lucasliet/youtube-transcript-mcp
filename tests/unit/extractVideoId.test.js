@@ -7,6 +7,11 @@ test('extractVideoId: valid full URL', () => {
   assert.equal(id, 'dQw4w9WgXcQ')
 })
 
+test('extractVideoId: valid live URL', () => {
+  const id = __testables.extractVideoId('https://www.youtube.com/live/mM8NN_Y18T4')
+  assert.equal(id, 'mM8NN_Y18T4')
+})
+
 test('extractVideoId: valid youtu.be short URL', () => {
   const id = __testables.extractVideoId('https://youtu.be/dQw4w9WgXcQ')
   assert.equal(id, 'dQw4w9WgXcQ')
@@ -16,4 +21,3 @@ test('extractVideoId: invalid URL', () => {
   const id = __testables.extractVideoId('https://example.com')
   assert.equal(id, null)
 })
-
