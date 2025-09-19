@@ -107,28 +107,33 @@ Formato de retorno (MCP):
 - O handler `tools/call` retorna `content` com `type: "text"` contendo o JSON serializado do array de segmentos.
 
 ### Executando como servidor remoto (SSE)
-O mesmo binário pode expor um servidor HTTP com suporte a Server-Sent Events:
+O binário expõe um endpoint `/mcp` para acesso remoto via MCP com Server-Sent Events (SSE).
+
+### Executando como servidor remoto (SSE)
+
+Para iniciar o servidor remoto, use:
 
 ```bash
-node src/cli.js --mode remote --host 0.0.0.0 --port 3000 \
-  --heartbeat 25000 --request-timeout 60000 --max-clients 10 --cors "*"
+npm run start:remote --host 0.0.0.0 --port 3000 --cors "*"
 ```
 
 Endpoints expostos:
-- `GET /mcp/events`: abre o stream SSE e retorna um `ready` com `connectionId`.
-- `POST /mcp/messages`: recebe `{ connectionId, message }`, onde `message` é um frame JSON-RPC (`tools/list`, `tools/call`).
+- `GET /mcp`: abre o stream SSE, envia evento `ready` com `sessionId` e heartbeats.
+- `POST /mcp`: recebe frames JSON-RPC (`initialize`, `tools/list`, `tools/call`, `shutdown`) identificados pelo cabeçalho `Mcp-Session-Id`.
 
-Eventos SSE possíveis:
-- `ready`: handshake inicial com `connectionId` e `messageEndpoint`.
-- `message`: resposta JSON-RPC com `response`.
-- `error`: payload padronizado (`code`, `message`, `details`). Inclui códigos `invalid_request`, `tool_error`, `timeout`, `server_busy`.
-- `heartbeat`: emitido periodicamente para manter a conexão ativa.
+Recursos chave:
+- Handshake MCP (`initialize`/`shutdown`) tratado automaticamente pelo SDK.
+- `Mcp-Session-Id` exposto via header para transporte HTTP e SSE.
+- Compatibilidade legada: `/mcp/events` e `/mcp/messages` retornam mensagens de migração.
+- Conexões liveness: heartbeats periódicos e limpeza de sessões expiradas.
 
 Flags úteis:
-- `--heartbeat / --heartbeat-interval` (ms, padrão 25000)
-- `--request-timeout` (ms, padrão 60000)
-- `--max-clients` (padrão 10)
-- `--cors` (`false`, `*` ou origem específica)
+- `--host`: Host/IP para bind do servidor (padrão: configurable via `src/server/config.js`)
+- `--port`: Porta do servidor (padrão: configurable via `src/server/config.js`)
+- `--cors`: Configuração CORS (`false`, `*` ou origem específica)
+- `--heartbeat-interval`: Intervalo de heartbeat em ms (padrão: 25000)
+- `--request-timeout`: Timeout de request em ms (padrão: 60000, deve ser > heartbeat)
+- `--max-clients`: Máximo de clientes simultâneos (padrão: 10)
 
 ## Formato de entrade e saída
 Entrada:

@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://modelcontextprotocol.io/schemas/shutdown-request.json",
+  "title": "MCP Shutdown Request",
+  "description": "JSON-RPC request to shutdown MCP session",
+  "type": "object",
+  "properties": {
+    "jsonrpc": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "id": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" }
+      ]
+    },
+    "method": {
+      "type": "string",
+      "const": "shutdown"
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": false
+    }
+  },
+  "required": ["jsonrpc", "id", "method"],
+  "additionalProperties": false
+}

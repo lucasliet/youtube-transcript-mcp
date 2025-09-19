@@ -7,7 +7,6 @@
 - SSE fits MCP's server-to-client streaming pattern and is widely supported by hosting platforms.
 - A single endpoint simplifies deployment and can multiplex multiple clients via unique connection identifiers.
 **Alternatives considered**:
-- Express.js or Fastify: unnecessary abstraction for two endpoints and increases cold-start time.
 - WebSocket transport: more complex handshake and framing without delivering extra value for one-way streaming.
 - Long polling: wasteful for transcript streaming and complicates connection lifecycle management.
 

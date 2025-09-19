@@ -34,4 +34,14 @@ Nenhum segredo é armazenado ou versionado. Configurações sensíveis são lida
 ## Governance
 Esta constituição rege todas as PRs do repositório. Alterações devem ser documentadas neste arquivo com versão e data atualizadas. Revisores bloqueiam mudanças que violem os princípios acima ou que não comprovem testes e documentação atualizados.
 
-**Version**: 2.0.0 | **Ratified**: 2025-09-30 | **Last Amended**: 2025-09-30
+### VI. Documentação obrigatória após implementações
+Após cada implementação significativa (nova funcionalidade, mudança de arquitetura, ou correção crítica), os arquivos `AGENTS.md` e `constitution.md` devem ser atualizados para refletir o estado atual do projeto. Esta atualização é obrigatória e deve incluir:
+- Novas diretrizes de desenvolvimento
+- Mudanças na arquitetura ou dependências
+- Regras de governança atualizadas
+- Notas sobre compatibilidade retroativa
+- Versionamento dos documentos com data e justificativa
+
+Esta regra garante que a documentação evolua junto com o código e mantenha a consistência do projeto.
+
+**Version**: 2.0.1 | **Ratified**: 2025-09-17 | **Last Amended**: 2025-09-17

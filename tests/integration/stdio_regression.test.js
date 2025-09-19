@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { transcriptYt } from '../../src/tool/transcriptYt.js'
 
 function mkResponse(status, body, contentType = 'text/html') {
-  return new Response(body, { status, headers: { 'content-type': contentType } })
+  return new globalThis.Response(body, { status, headers: { 'content-type': contentType } })
 }
 
 test('integration: stdio mode path still returns transcript', async () => {

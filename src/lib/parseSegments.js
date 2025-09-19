@@ -25,7 +25,7 @@ export function parseSegments(xml) {
  */
 export function parseTranscriptTexts(xml) {
   const out = []
-  const textRe = /<text[^>]*start=\"([^\"]+)\"[^>]*dur=\"([^\"]+)\"[^>]*>([\s\S]*?)<\/text>/g
+  const textRe = /<text[^>]*start="([^"]+)"[^>]*dur="([^"]+)"[^>]*>([\s\S]*?)<\/text>/g
   let m
   while ((m = textRe.exec(xml)) !== null) {
     const text = decodeHtml(String(m[3] || '')).trim()
@@ -44,7 +44,7 @@ export function parseTranscriptTexts(xml) {
  */
 export function parseTimedtext(xml) {
   const out = []
-  const pRe = /<p[^>]*\bt=\"(\d+)\"[^>]*\bd=\"(\d+)\"[^>]*>([\s\S]*?)<\/p>/g
+  const pRe = /<p[^>]*\bt="(\d+)"[^>]*\bd="(\d+)"[^>]*>([\s\S]*?)<\/p>/g
   let p
   while ((p = pRe.exec(xml)) !== null) {
     const start = Number(p[1] || 0)
@@ -67,6 +67,6 @@ export function decodeHtml(s) {
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '\"')
+    .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
 }

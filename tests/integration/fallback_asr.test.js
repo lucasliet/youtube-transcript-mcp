@@ -35,6 +35,6 @@ test('integration: falls back to ASR when manual missing', async () => {
 })
 
 function mkResponse(status, body, contentType = 'text/html') {
-  return new Response(body, { status, headers: { 'content-type': contentType } })
+  return new globalThis.Response(body, { status, headers: { 'content-type': contentType } })
 }
 
