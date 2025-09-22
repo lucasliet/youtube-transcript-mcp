@@ -3,6 +3,7 @@
 ## Core Principles & Governance
 All contributions to this repository are governed by the principles and guidelines outlined in our constitution. Before contributing, please familiarize yourself with this document:
 - **Constitution:** `/.specify/memory/constitution.md`
+@.specify/memory/constitution.md
 
 This document establishes the core mission, operational rules, and development workflow to ensure the project remains simple, robust, and focused.
 
