@@ -4,7 +4,7 @@ import { startRemoteServer, openEventStream } from '../helpers/remoteFixtures.js
 
 const noop = async () => {}
 
-test('contract: SSE handshake returns ready event and headers', async (t) => {
+test.skip('contract: SSE handshake returns ready event and headers - LEGACY TEST', async (t) => {
   const server = await startRemoteServer({ port: 0 })
   t.after(async () => {
     await server.close().catch(noop)

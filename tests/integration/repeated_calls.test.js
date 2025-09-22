@@ -39,6 +39,6 @@ test('integration: repeated calls perform fresh fetches (no cache)', async () =>
 })
 
 function mkResponse(status, body, contentType = 'text/html') {
-  return new Response(body, { status, headers: { 'content-type': contentType } })
+  return new globalThis.Response(body, { status, headers: { 'content-type': contentType } })
 }
 

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://modelcontextprotocol.io/schemas/initialize-request.json",
+  "title": "MCP Initialize Request",
+  "description": "JSON-RPC request to initialize MCP session",
+  "type": "object",
+  "properties": {
+    "jsonrpc": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "id": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" }
+      ]
+    },
+    "method": {
+      "type": "string", 
+      "const": "initialize"
+    },
+    "params": {
+      "type": "object",
+      "properties": {
+        "protocolVersion": {
+          "type": "string",
+          "const": "2025-06-18"
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "roots": {
+              "type": "object",
+              "properties": {
+                "listChanged": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            },
+            "sampling": {
+              "type": "object",
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": true
+        },
+        "clientInfo": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" }
+          },
+          "required": ["name", "version"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["protocolVersion", "capabilities", "clientInfo"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["jsonrpc", "id", "method", "params"],
+  "additionalProperties": false
+}

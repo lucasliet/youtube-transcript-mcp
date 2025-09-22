@@ -1,6 +1,6 @@
 {
   "name": "youtube-transcript-mcp",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "MCP tool to fetch YouTube transcripts for LLMs",
   "license": "MIT",
   "type": "module",
@@ -10,7 +10,11 @@
   },
   "scripts": {
     "test": "node --test tests/**/*.test.js",
-    "lint": "eslint . --max-warnings=0"
+    "lint": "eslint . --max-warnings=0",
+    "start:stdio": "node src/cli.js",
+    "start:remote": "node src/cli.js --mode remote --port 3333 --cors *",
+    "dev:stdio": "node --watch src/cli.js",
+    "dev:remote": "node --watch src/cli.js --mode remote --port 3333 --cors *"
   },
   "engines": {
     "node": ">=18"

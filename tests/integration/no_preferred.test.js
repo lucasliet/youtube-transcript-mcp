@@ -40,5 +40,5 @@ test('integration: when no preferredLanguages provided, uses default track', asy
 })
 
 function mkResponse(status, body, contentType = 'text/html') {
-  return new Response(body, { status, headers: { 'content-type': contentType } })
+  return new globalThis.Response(body, { status, headers: { 'content-type': contentType } })
 }
