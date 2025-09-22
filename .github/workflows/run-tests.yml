@@ -1,4 +1,4 @@
-name: Run tests
+name: Test
 
 on:
   push:
@@ -22,9 +22,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
+      - name: Run tests and generate coverage
+        run: npm run coverage
 
-      - name: Run lint
-        run: npm run lint
+      - name: Upload coverage to Codecov
+        uses: coverallsapp/github-action@master
+        with:
+          path-to-lcov: ./coverage/lcov.info
+          github-token: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true

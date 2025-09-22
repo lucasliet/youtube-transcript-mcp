@@ -8,8 +8,9 @@ O pacote deve continuar focado na ferramenta `transcript_yt`, preservando contra
 ### II. Simplicidade operacional
 Implementações priorizam dependências nativas do Node.js 18+, evitando frameworks adicionais. Arquiteturas novas precisam caber no mesmo processo do CLI e manter a paridade entre os modos stdio e remoto, reutilizando módulos existentes sempre que possível.
 
-### III. Testes como gate de qualidade
-Toda alteração significativa começa por testes automatizados (contratos, integração e unidade) que reproduzem o cenário alvo. Somente após observar o RED é permitido implementar. Regressões no stdio são tratadas com prioridade máxima.
+
+### III. Testes e Qualidade como Gates
+Toda alteração significativa começa por testes automatizados (contratos, integração e unidade) que reproduzem o cenário alvo. Somente após observar o RED é permitido implementar. A qualidade do código é garantida por gates automatizados, incluindo, mas não se limitando a, linting, detecção de duplicatas e análise de cobertura de código. Regressões no stdio são tratadas com prioridade máxima.
 
 ### IV. Observabilidade enxuta
 Logs devem ser categorizados (`invalid_request`, `tool_error`, etc.), com mensagens curtas e sem dados pessoais. Métricas externas ficam a cargo do operador; o projeto limita-se a fornecer hooks de log e códigos de erro consistentes.
