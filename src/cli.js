@@ -42,6 +42,11 @@ async function startMcpServer() {
   await server.connect(transport)
 }
 
+/**
+ * Starts the remote MCP server mode with the given configuration.
+ * @param {object} config The server configuration object.
+ */
+
 async function startRemoteMode(config) {
   const server = await startSdkRemoteServer({
     port: config.port,

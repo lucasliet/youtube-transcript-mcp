@@ -4,44 +4,14 @@ import { once } from 'node:events'
 import { randomUUID } from 'node:crypto'
 import { logSdkError, logSdkTransport, SDK_ERROR_CATEGORIES } from '../lib/log.js'
 
-const STREAMABLE_MODULE_PATHS = [
-  '@modelcontextprotocol/sdk/server/streamableHttp.js',
-  '@modelcontextprotocol/sdk/server/streamable-http.js',
-  '@modelcontextprotocol/sdk/dist/server/streamableHttp.js',
-  '@modelcontextprotocol/sdk/dist/server/streamable-http.js'
-]
-
-const SUPPORTED_PROTOCOL_VERSION = '2025-06-18'
-
-let streamableTransportPromise
 
 async function loadStreamableHTTPServerTransport() {
   if (streamableTransportPromise === undefined) {
-    streamableTransportPromise = (async () => {
-      for (const specifier of STREAMABLE_MODULE_PATHS) {
-        try {
-          const module = await import(specifier)
-          if (module && module.StreamableHTTPServerTransport) {
-            return module.StreamableHTTPServerTransport
-          }
-        } catch (error) {
-          const message = typeof error === 'object' && error !== null ? String(error.message || error) : String(error)
-          if (error?.code !== 'ERR_MODULE_NOT_FOUND' && !message.includes('Cannot find module')) {
-            throw error
-          }
-        }
-      }
-      return null
-    })()
+    streamableTransportPromise = await safeImportStreamableTransport()
   }
   return streamableTransportPromise
 }
 
-function isInitializeRequestBody(body) {
-  if (!body || typeof body !== 'object') return false
-  if (body.method !== 'initialize') return false
-  return true
-}
 
 export class SdkTransportRegistry {
   constructor(config, server) {
@@ -418,11 +388,7 @@ export class SdkTransportRegistry {
       return
     }
 
-    try {
-      await tracked.transport.handleRequest(req, res)
-    } finally {
-      tracked.lastActivity = Date.now()
-    }
+    await this.#handleRequestWithActivityUpdate(tracked, req, res)
   }
 
   async handleStreamableDelete(req, res) {
@@ -441,11 +407,11 @@ export class SdkTransportRegistry {
       return
     }
 
-    try {
-      await tracked.transport.handleRequest(req, res)
-    } finally {
-      tracked.lastActivity = Date.now()
-    }
+    await this.#handleRequestWithActivityUpdate(tracked, req, res)
+  }
+
+  async #handleRequestWithActivityUpdate(tracked, req, res) {
+    await this.#handleRequestWithActivityUpdate(tracked, req, res)
   }
 
   isAtCapacity() {
@@ -596,3 +562,4 @@ export class SdkTransportRegistry {
     return expired
   }
 }
+import { safeImportStreamableTransport } from '../lib/safeImport.js'

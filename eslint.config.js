@@ -30,6 +30,9 @@ export default [
       'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'no-console': 'off',
       'require-await': 'off',
+      'no-var': 'error',
+      'prefer-const': 'error',
+      'eqeqeq': 'error',
       'no-undef': 'off',
       'no-constant-condition': 'off'
     }

@@ -27,6 +27,12 @@ import { logError } from '../lib/log.js'
  * @param {TranscriptYtArgs} args The request payload with videoUrl and optional preferredLanguages.
  * @returns {Promise<TranscriptSegment[] | null>} A list of transcript segments or null when unavailable.
  */
+/**
+ * Fetches YouTube transcript segments from a video URL for LLM consumption.
+ * @param {TranscriptYtArgs} args The arguments object.
+ * @returns {Promise<TranscriptSegment[]|null>} Array of transcript segments or null if failed.
+ */
+
 export async function transcriptYt(args) {
   try {
     const id = extractVideoId(args.videoUrl)
@@ -80,15 +86,7 @@ export const tool = ['transcript_yt', {
     function: {
       name: 'transcript_yt',
       description: 'Fetches YouTube transcript segments from a video URL for LLM consumption.',
-      parameters: {
-        type: 'object',
-        properties: {
-          videoUrl: { type: 'string', description: 'Full YouTube video URL.' },
-          preferredLanguages: { type: 'array', items: { type: 'string' }, description: "Optional ordered language codes preference, e.g., ['pt-BR','en']." }
-        },
-        required: ['videoUrl'],
-        additionalProperties: false
-      },
+  parameters: transcriptSchema,
       strict: true
     }
   },
@@ -102,3 +100,4 @@ export const __testables = {
   chooseTrack,
   parseSegments
 }
+import { transcriptSchema } from '../lib/transcriptSchema.js'
