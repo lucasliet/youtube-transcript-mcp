@@ -1,6 +1,6 @@
 # Tasks: Code Quality Improvements
 
-**Input**: Design documents from `/specs/003-code-quality-improvements/`
+**Input**: Design documents from `/specs/004-code-quality-improvements/`
 **Prerequisites**: plan.md, research.md, quickstart.md
 
 ## Phase 3.1: Setup
@@ -18,7 +18,7 @@
 
 ## Phase 3.3: Integration and Automation
 - [X] T010 Add a `coverage` script to `package.json` that runs the configured coverage tool on the existing tests, exporting the results in `lcov` and `text` formats.
-- [X] T011 Modify the existing GitHub workflow at `.github/workflows/run-tests.yml` to run the `npm run coverage` task instead of `npm test`, consolidating the CI steps.
+- [X] T011 Modify the existing GitHub workflow at `.github/workflows/run-tests.yml` to run `npm run lint`, `npm run duplicate-check`, and `npm run coverage`, consolidating the CI gates.
 - [X] T012 Add the `coverage/` directory to the `.gitignore` file.
 
 ## Phase 3.4: Documentation
@@ -34,7 +34,7 @@
 - Finalization task T014 should be the very last task.
 
 ## Parallel Example
-```
+```text
 # The setup tasks can be run in parallel:
 Task: "Install and configure jscpd for duplicate code detection."
 Task: "Install and configure depcheck to identify unused dependencies."

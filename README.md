@@ -10,7 +10,7 @@ Ferramenta MCP para obter transcrições de vídeos do YouTube com timestamps e 
 - [Instalação como biblioteca](#instalação-como-biblioteca-npm-via-github)
 - [Compatível com OpenAI SDK (Chat Completions Tools)](#compatível-com-openai-sdk-chat-completions-tools)
 - [Configuração como MCP Server](#configuração-como-mcp-server)
-- [Formato de entrada e saída](#formato-de-entrade-e-saída)
+- [Formato de entrada e saída](#formato-de-entrada-e-saída)
 - [Regras de Seleção de Legenda](#regras-de-seleção-de-legenda)
 - [Comportamento de Erro](#comportamento-de-erro)
 - [Limitações](#limitações)
@@ -110,8 +110,6 @@ Formato de retorno (MCP):
 ### Executando como servidor remoto (SSE)
 O binário expõe um endpoint `/mcp` para acesso remoto via MCP com Server-Sent Events (SSE).
 
-### Executando como servidor remoto (SSE)
-
 Para iniciar o servidor remoto, use:
 
 ```bash
@@ -136,7 +134,7 @@ Flags úteis:
 - `--request-timeout`: Timeout de request em ms (padrão: 60000, deve ser > heartbeat)
 - `--max-clients`: Máximo de clientes simultâneos (padrão: 10)
 
-## Formato de entrade e saída
+## Formato de entrada e saída
 Entrada:
 ```json
 {

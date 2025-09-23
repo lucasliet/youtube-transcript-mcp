@@ -4,3 +4,7 @@ dist
 .serena
 
 coverage/
+/.nyc_output/
+coverage-final.json
+lcov.info
+coverage/lcov.info

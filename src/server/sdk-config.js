@@ -7,13 +7,15 @@ const StreamableHTTPServerTransport = await safeImportStreamableTransport()
 
 export function createSdkServerConfig(overrides = {}) {
   const baseConfig = createServerConfig({ ...overrides, mode: 'remote' })
-  
+
+  const transports = {
+    streamable: StreamableHTTPServerTransport ?? null,
+    sse: SSEServerTransport
+  }
+
   return {
     ...baseConfig,
-    transports: {
-      streamable: StreamableHTTPServerTransport,
-      sse: SSEServerTransport
-    },
+    transports,
     serverInfo: {
       name: 'youtube-transcript-mcp',
       version: '2.0.2'

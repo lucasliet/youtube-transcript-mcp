@@ -13,10 +13,11 @@ npm test
 
 ## Running Code Coverage
 
-A new task will be added to calculate the code coverage of the test suite. To run it, use:
+Uma tarefa de cobertura foi adicionada. Para executar:
 
 ```bash
 npm run coverage
 ```
 
-This command will generate a report indicating the percentage of code that is covered by automated tests.
+Este comando gera o relatório com o percentual coberto e artefatos em `coverage/` (ex.: `lcov.info`, sumário em texto).
+

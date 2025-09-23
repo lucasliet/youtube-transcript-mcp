@@ -44,7 +44,7 @@ describe('Transport Switching Contract', () => {
       const isLegacySse = registry.isLegacySseEndpoint(path)
       const isLegacyMsg = registry.isLegacyMessageEndpoint(path)
       
-      switch(type) {
+      switch (type) {
         case 'primary':
           assert.equal(isMcp, true, 'Should detect primary MCP endpoint')
           break

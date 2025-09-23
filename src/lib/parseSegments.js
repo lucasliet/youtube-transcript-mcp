@@ -1,4 +1,3 @@
-
 /**
  * @typedef {object} TranscriptSegment
  * @property {string} text The caption text content.

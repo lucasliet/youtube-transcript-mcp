@@ -7,6 +7,7 @@ import { chooseTrack } from '../lib/chooseTrack.js'
 import { parseSegments } from '../lib/parseSegments.js'
 import { normalizeSegments } from '../lib/normalizeSegments.js'
 import { logError } from '../lib/log.js'
+import { transcriptSchema } from '../lib/transcriptSchema.js'
 
 /**
  * @typedef {object} TranscriptYtArgs
@@ -26,11 +27,6 @@ import { logError } from '../lib/log.js'
  * Returns null on any failure; logs categorized errors.
  * @param {TranscriptYtArgs} args The request payload with videoUrl and optional preferredLanguages.
  * @returns {Promise<TranscriptSegment[] | null>} A list of transcript segments or null when unavailable.
- */
-/**
- * Fetches YouTube transcript segments from a video URL for LLM consumption.
- * @param {TranscriptYtArgs} args The arguments object.
- * @returns {Promise<TranscriptSegment[]|null>} Array of transcript segments or null if failed.
  */
 
 export async function transcriptYt(args) {
@@ -86,12 +82,12 @@ export const tool = ['transcript_yt', {
     function: {
       name: 'transcript_yt',
       description: 'Fetches YouTube transcript segments from a video URL for LLM consumption.',
-  parameters: transcriptSchema,
+      parameters: transcriptSchema,
       strict: true
     }
   },
   /** @type {(args: TranscriptYtArgs) => Promise<ReturnType<typeof transcriptYt>>} */
-  fn: async (args) => transcriptYt(args)
+  fn: transcriptYt
 }]
 
 export const __testables = {
@@ -100,4 +96,3 @@ export const __testables = {
   chooseTrack,
   parseSegments
 }
-import { transcriptSchema } from '../lib/transcriptSchema.js'

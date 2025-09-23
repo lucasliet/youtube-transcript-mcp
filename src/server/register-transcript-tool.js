@@ -10,7 +10,7 @@ export function registerTranscriptTool(server) {
   server.registerTool({
     name: 'transcript_yt',
     description: 'Fetches YouTube transcript segments from a video URL for LLM consumption.',
-   inputSchema: transcriptSchema
+    inputSchema: transcriptSchema
   }, async (args = {}) => {
     const videoUrl = String(args.videoUrl || '')
     const preferredLanguages = Array.isArray(args.preferredLanguages) ? args.preferredLanguages : undefined

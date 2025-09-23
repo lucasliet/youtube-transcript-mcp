@@ -1,11 +1,11 @@
 
 # Implementation Plan: Code Quality Improvements
 
-**Branch**: `004-code-quality-improvements` | **Date**: 2025-09-22 | **Spec**: [link](./spec.md)
-**Input**: Feature specification from `/specs/003-code-quality-improvements/spec.md`
+**Branch**: `004-code-quality-improvements` | **Date**: 2025-09-22 | **Spec**: [Especificação detalhada](./spec.md)
+**Input**: Feature specification from `/specs/004-code-quality-improvements/spec.md`
 
 ## Execution Flow (/plan command scope)
-```
+```text
 1. Load feature spec from Input path
    → If not found: ERROR "No feature spec at {path}"
 2. Fill Technical Context (scan for NEEDS CLARIFICATION)
@@ -52,8 +52,8 @@ The feature focuses on a comprehensive review and refactoring of the existing co
 ## Project Structure
 
 ### Documentation (this feature)
-```
-specs/003-code-quality-improvements/
+```text
+specs/004-code-quality-improvements/
 ├── plan.md              # This file (/plan command output)
 ├── research.md          # Phase 0 output (/plan command)
 ├── data-model.md        # Phase 1 output (/plan command)
@@ -63,7 +63,7 @@ specs/003-code-quality-improvements/
 ```
 
 ### Source Code (repository root)
-```
+```text
 # Option 1: Single project (DEFAULT)
 src/
 ├── lib/
@@ -91,7 +91,8 @@ This feature is a refactoring effort and does not introduce new data models or A
 **Output**: `quickstart.md`
 
 ## Phase 2: Task Planning Approach
-*This section describes what the /tasks command will do - DO NOT execute during /plan*
+#### Escopo desta seção
+Esta seção descreve o que o comando `/tasks` fará — não execute durante `/plan`.
 
 **Task Generation Strategy**:
 - Generate tasks based on the functional requirements in `spec.md`.
@@ -115,7 +116,8 @@ This feature is a refactoring effort and does not introduce new data models or A
 No constitutional violations that require justification.
 
 ## Progress Tracking
-*This checklist is updated during execution flow*
+#### Atualização do checklist
+Este checklist é atualizado durante a execução.
 
 **Phase Status**:
 - [X] Phase 0: Research complete (/plan command)
@@ -130,3 +132,4 @@ No constitutional violations that require justification.
 - [ ] Post-Design Constitution Check: PASS
 - [X] All NEEDS CLARIFICATION resolved
 - [ ] Complexity deviations documented
+

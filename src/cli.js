@@ -14,6 +14,9 @@ async function main() {
   const args = parseArgs(process.argv.slice(2))
   const config = parseCliConfig(args)
   if (config.mode === 'remote') {
+    if (args.videoUrl) {
+      console.error('[warn] Ignoring --videoUrl because mode=remote')
+    }
     await startRemoteMode(config)
     return
   }
@@ -43,10 +46,10 @@ async function startMcpServer() {
 }
 
 /**
- * Starts the remote MCP server mode with the given configuration.
- * @param {object} config The server configuration object.
+ * Inicia o modo remoto do MCP com a configuração fornecida.
+ * @param {{ port?: number, host?: string, cors?: string|string[]|boolean, heartbeatIntervalMs?: number, requestTimeoutMs?: number, maxClients?: number }} config
+ * @returns {Promise<void>}
  */
-
 async function startRemoteMode(config) {
   const server = await startSdkRemoteServer({
     port: config.port,
@@ -56,12 +59,21 @@ async function startRemoteMode(config) {
     requestTimeoutMs: config.requestTimeoutMs,
     maxClients: config.maxClients
   })
+  let shuttingDown = false
   const shutdown = async () => {
-    await server.close()
-    process.exit(0)
+    if (shuttingDown) return
+    shuttingDown = true
+    try {
+      await server.close()
+    } catch (error) {
+      console.error('[error] Failed to close remote server:', error)
+    } finally {
+      process.exitCode = 0
+      setTimeout(() => process.exit(0), 2000).unref()
+    }
   }
-  process.on('SIGINT', shutdown)
-  process.on('SIGTERM', shutdown)
+  process.once('SIGINT', shutdown)
+  process.once('SIGTERM', shutdown)
 }
 
 /**

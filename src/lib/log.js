@@ -48,7 +48,7 @@ export function logSdkError(category, message, level = LOG_LEVELS.ERROR, context
   let logMessage = `[${timestamp}] ${level} [${category}] ${message}`
   
   if (context.sessionId) {
-    logMessage += " (session: " + context.sessionId + ")"
+    logMessage += ' (session: ' + context.sessionId + ')'
   }
   
   console.error(logMessage)
@@ -72,7 +72,7 @@ export function logSdkError(category, message, level = LOG_LEVELS.ERROR, context
  */
 export function logSdkTransport(event, details = {}) {
   const category = details.type === 'sse' ? SDK_ERROR_CATEGORIES.SSE_TRANSPORT : SDK_ERROR_CATEGORIES.SDK_ERROR
-  logSdkError(category, "Transport event: " + event, LOG_LEVELS.INFO, details)
+  logSdkError(category, 'Transport event: ' + event, LOG_LEVELS.INFO, details)
 }
 
 /**
@@ -82,14 +82,14 @@ export function logSdkTransport(event, details = {}) {
  */
 export function logMcpProtocol(event, details = {}) {
   const categoryMap = {
-    'initialize': SDK_ERROR_CATEGORIES.MCP_INITIALIZE,
-    'shutdown': SDK_ERROR_CATEGORIES.MCP_SHUTDOWN,
-    'request': SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
-    'response': SDK_ERROR_CATEGORIES.MCP_PROTOCOL
+    initialize: SDK_ERROR_CATEGORIES.MCP_INITIALIZE,
+    shutdown: SDK_ERROR_CATEGORIES.MCP_SHUTDOWN,
+    request: SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
+    response: SDK_ERROR_CATEGORIES.MCP_PROTOCOL
   }
-  
+
   const category = categoryMap[event] || SDK_ERROR_CATEGORIES.MCP_PROTOCOL
-  logSdkError(category, "MCP protocol event: " + event, LOG_LEVELS.INFO, details)
+  logSdkError(category, 'MCP protocol event: ' + event, LOG_LEVELS.INFO, details)
 }
 
 /**

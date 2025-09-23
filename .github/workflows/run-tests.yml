@@ -22,10 +22,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run duplicate check
+        run: npm run duplicate-check
+
       - name: Run tests and generate coverage
         run: npm run coverage
 
-      - name: Upload coverage to Codecov
+      - name: Upload coverage to Coveralls
+        if: always()
         uses: coverallsapp/github-action@master
         with:
           path-to-lcov: ./coverage/lcov.info

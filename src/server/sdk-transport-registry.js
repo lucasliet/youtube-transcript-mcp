@@ -3,23 +3,14 @@ import http from 'node:http'
 import { once } from 'node:events'
 import { randomUUID } from 'node:crypto'
 import { logSdkError, logSdkTransport, SDK_ERROR_CATEGORIES } from '../lib/log.js'
+import { safeImportStreamableTransport } from '../lib/safeImport.js'
 
 const SUPPORTED_PROTOCOL_VERSION = '2025-06-18'
 
 let streamableTransportPromise
-async function safeImportStreamableTransport() {
-  try {
-    const mod = await import('@modelcontextprotocol/sdk/server/streamable.js')
-    return mod.StreamableHTTPServerTransport
-  } catch {
-    return undefined
-  }
-}
-
-
 async function loadStreamableTransport() {
-  if (streamableTransportPromise === undefined) {
-    streamableTransportPromise = await safeImportStreamableTransport()
+  if (!streamableTransportPromise) {
+    streamableTransportPromise = safeImportStreamableTransport()
   }
   return streamableTransportPromise
 }
@@ -265,7 +256,7 @@ export class SdkTransportRegistry {
         this.activeTransports.delete(sessionId)
       })
     } catch (err) {
-      logSdkError(SDK_ERROR_CATEGORIES.SSE_CONNECTION, "SSE connection failed: " + err.message, undefined, {
+      logSdkError(SDK_ERROR_CATEGORIES.SSE_CONNECTION, 'SSE connection failed: ' + err.message, undefined, {
         endpoint: '/mcp',
         error: err.message
       })
@@ -436,7 +427,12 @@ export class SdkTransportRegistry {
   }
 
   async #handleRequestWithActivityUpdate(tracked, req, res) {
-    await this.#handleRequestWithActivityUpdate(tracked, req, res)
+    const startedAt = Date.now()
+    try {
+      await tracked.transport.handleRequest(req, res)
+    } finally {
+      tracked.lastActivity = res.statusCode === 202 ? startedAt : null
+    }
   }
 
   isAtCapacity() {
