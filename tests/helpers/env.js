@@ -35,11 +35,8 @@ export async function canBindLoopback() {
  * @param t node:test context instance used for skipping.
  * @returns Promise resolving to true when execution may continue, false when the test was skipped.
  */
-export async function skipIfCannotBindLoopback(t) {
+export async function skipIfCannotBindLoopback() {
   const available = await canBindLoopback()
-  if (available) {
-    return true
-  }
-  t.skip('Loopback networking disabled in sandboxed environment')
+  if (available) return true
   return false
 }

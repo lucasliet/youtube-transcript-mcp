@@ -9,8 +9,8 @@ describe('Multiple Initialize Attempts Test', () => {
   let server
   let supportsStreamable
 
-  before(async (t) => {
-    if (!await skipIfCannotBindLoopback(t)) return
+  before(async () => {
+    if (!await skipIfCannotBindLoopback()) return
     server = await startRemoteServer({ port: 0 })
     supportsStreamable = Boolean(server?.config?.transports?.streamable)
   })
@@ -19,11 +19,8 @@ describe('Multiple Initialize Attempts Test', () => {
     await server?.close?.()
   })
 
-  it('should create distinct sessions for sequential initialize requests', async (t) => {
-    if (!supportsStreamable) {
-      t.skip('Streamable HTTP transport not available in current SDK version')
-      return
-    }
+  it('should create distinct sessions for sequential initialize requests', async function () {
+    if (!supportsStreamable || !server?.baseUrl) return this.skip()
 
     const buildRequest = (id, name) => ({
       jsonrpc: '2.0',
@@ -69,11 +66,8 @@ describe('Multiple Initialize Attempts Test', () => {
     assert.notEqual(sessionIdA, sessionIdB, 'Sessions should be distinct')
   })
 
-  it('should allow subscribing to notifications using returned session id', async (t) => {
-    if (!supportsStreamable) {
-      t.skip('Streamable HTTP transport not available in current SDK version')
-      return
-    }
+  it('should allow subscribing to notifications using returned session id', async function () {
+    if (!supportsStreamable || !server?.baseUrl) return this.skip()
 
     const response = await globalThis.fetch(`${server.baseUrl}/mcp`, {
       method: 'POST',

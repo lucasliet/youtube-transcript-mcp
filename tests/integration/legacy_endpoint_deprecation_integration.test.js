@@ -9,8 +9,8 @@ describe('Legacy Endpoint Migration', () => {
   let registry
   let baseUrl
 
-  before(async (t) => {
-    if (!await skipIfCannotBindLoopback(t)) return
+  before(async () => {
+    if (!await skipIfCannotBindLoopback()) return
     const config = createSdkServerConfig({ port: 0, host: '127.0.0.1' })
     const server = createSdkServer(config)
     registerTranscriptTool(server)
@@ -25,7 +25,8 @@ describe('Legacy Endpoint Migration', () => {
     }
   })
 
-  it('should return migration guidance for legacy SSE endpoint', async () => {
+  it('should return migration guidance for legacy SSE endpoint', async function () {
+    if (!baseUrl) return this.skip()
     const response = await fetch(baseUrl + '/mcp/events', { headers: { Accept: 'text/event-stream' } })
     assert.equal(response.status, 404, 'Legacy SSE endpoint should return 404')
     const payload = await response.json()
@@ -34,7 +35,8 @@ describe('Legacy Endpoint Migration', () => {
     assert.equal(payload.error.migration.newEndpoint, '/mcp', 'Migration guidance should include new endpoint')
   })
 
-  it('should return migration guidance for legacy message endpoint', async () => {
+  it('should return migration guidance for legacy message endpoint', async function () {
+    if (!baseUrl) return this.skip()
     const response = await fetch(baseUrl + '/mcp/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

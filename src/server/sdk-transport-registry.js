@@ -4,12 +4,37 @@ import { once } from 'node:events'
 import { randomUUID } from 'node:crypto'
 import { logSdkError, logSdkTransport, SDK_ERROR_CATEGORIES } from '../lib/log.js'
 
+const SUPPORTED_PROTOCOL_VERSION = '2025-06-18'
 
-async function loadStreamableHTTPServerTransport() {
+let streamableTransportPromise
+async function safeImportStreamableTransport() {
+  try {
+    const mod = await import('@modelcontextprotocol/sdk/server/streamable.js')
+    return mod.StreamableHTTPServerTransport
+  } catch {
+    return undefined
+  }
+}
+
+
+async function loadStreamableTransport() {
   if (streamableTransportPromise === undefined) {
     streamableTransportPromise = await safeImportStreamableTransport()
   }
   return streamableTransportPromise
+}
+
+/**
+ * Determines whether a parsed JSON body represents a valid MCP initialize request.
+ * Accepts minimal JSON-RPC 2.0 shape with method initialize; extra fields are ignored.
+ * @param body Parsed JSON body from the HTTP request.
+ * @returns True when the body is a valid initialize request, false otherwise.
+ */
+function isInitializeRequestBody(body) {
+  if (!body || typeof body !== 'object') return false
+  if (body.jsonrpc !== '2.0') return false
+  if (body.method !== 'initialize') return false
+  return true
 }
 
 
@@ -318,7 +343,7 @@ export class SdkTransportRegistry {
   }
 
   async createStreamableSession(req, res, body) {
-    const StreamableHTTPServerTransport = await loadStreamableHTTPServerTransport()
+    const StreamableHTTPServerTransport = await loadStreamableTransport()
     if (!StreamableHTTPServerTransport) {
       res.writeHead(501, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({
@@ -562,4 +587,3 @@ export class SdkTransportRegistry {
     return expired
   }
 }
-import { safeImportStreamableTransport } from '../lib/safeImport.js'

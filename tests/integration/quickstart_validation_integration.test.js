@@ -11,8 +11,8 @@ describe('Quickstart Validation Scenarios', () => {
   let registry
   let baseUrl
 
-  before(async (t) => {
-    if (!await skipIfCannotBindLoopback(t)) return
+  before(async () => {
+    if (!await skipIfCannotBindLoopback()) return
     const config = createSdkServerConfig({ port: 0, host: '127.0.0.1' })
     const server = createSdkServer(config)
     registerTranscriptTool(server)
@@ -27,7 +27,8 @@ describe('Quickstart Validation Scenarios', () => {
     }
   })
 
-  it('should expose SSE endpoint and session identifier', async () => {
+  it('should expose SSE endpoint and session identifier', async function () {
+    if (!baseUrl) return this.skip()
     const connection = await openSseConnection(baseUrl)
     assert.equal(typeof connection.sessionId, 'string', 'Session identifier should be available')
     assert.equal(connection.sessionId.length > 0, true, 'Session identifier should not be empty')
@@ -35,7 +36,8 @@ describe('Quickstart Validation Scenarios', () => {
     await connection.close()
   })
 
-  it('should accept initialize and tools/list requests over SSE transport', async () => {
+  it('should accept initialize and tools/list requests over SSE transport', async function () {
+    if (!baseUrl) return this.skip()
     const connection = await openSseConnection(baseUrl)
 
     const initializeResponse = await postSseMessage(baseUrl, connection.sessionId, {
@@ -69,7 +71,8 @@ describe('Quickstart Validation Scenarios', () => {
     await connection.close()
   })
 
-  it('should reject tool access without session identifier', async () => {
+  it('should reject tool access without session identifier', async function () {
+    if (!baseUrl) return this.skip()
     const response = await fetch(baseUrl + '/mcp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
