@@ -28,6 +28,9 @@ Try to run tests with elevated priviledges (not sudo)
 - `npm run dev:remote`: Observa mudanças e reinicia automaticamente em modo remoto.
 - `npm test`: Executa toda a suíte (`node --test tests/**/*.test.js`).
 - `npm run lint`: Verifica o projeto com ESLint.
+- `npm run check:duplicates`: Verifica código duplicado com JSCPD.
+- `npm run check:deps`: Verifica dependências não utilizadas com Depcheck.
+- `npm run coverage`: Executa testes e gera relatório de cobertura de código.
 - Execução one‑off: `node src/cli.js --videoUrl "https://www.youtube.com/watch?v=VIDEO_ID" --preferredLanguages "pt-BR,en"`.
 - Host MCP (via GitHub): `npx -y --package=github:lucasliet/youtube-transcript-mcp#main youtube-transcript-mcp`.
 

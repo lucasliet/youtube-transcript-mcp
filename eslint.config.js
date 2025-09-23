@@ -6,32 +6,29 @@ export default [
     ignores: [
       'node_modules/**',
       'dist/**',
-      'build/**'
+      'build/**',
+      'coverage/**'
     ]
   },
   js.configs.recommended,
   {
+    files: ['**/*.js'],
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',
       globals: {
         ...globals.node,
-        ...globals.es2021,
-        AbortController: 'readonly',
+        // for tests
         fetch: 'readonly',
-        Response: 'readonly',
-        TextDecoder: 'readonly',
-        setTimeout: 'readonly',
-        clearTimeout: 'readonly',
-        console: 'readonly'
+        Response: 'readonly'
       }
     },
     rules: {
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      'no-console': 'off',
-      'require-await': 'off',
-      'no-undef': 'off',
-      'no-constant-condition': 'off'
+      semi: ['error', 'never'],
+      quotes: ['error', 'single', { avoidEscape: true }],
+      indent: ['error', 2],
+      'no-unused-vars': 'warn',
+      'no-console': 'warn'
     }
   }
 ]

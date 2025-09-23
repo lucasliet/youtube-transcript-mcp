@@ -116,10 +116,12 @@ export function randomConnectionId() {
 }
 
 export async function waitForEventType(stream, event, timeoutMs = DEFAULT_TIMEOUT) {
-  while (true) {
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
     const next = await stream.nextEvent(timeoutMs)
     if (next.event === event) return next
   }
+  throw new Error(`event ${event} not received in time`)
 }
 
 function parseEvent(raw) {
@@ -141,10 +143,10 @@ function parseEvent(raw) {
 
 export async function waitForCondition(check, timeoutMs = DEFAULT_TIMEOUT, intervalMs = 25) {
   const start = Date.now()
-  while (true) {
+  while (Date.now() - start < timeoutMs) {
     const result = await check()
     if (result) return result
-    if (Date.now() - start > timeoutMs) throw new Error('condition timeout')
     await delay(intervalMs)
   }
+  throw new Error('condition timeout')
 }

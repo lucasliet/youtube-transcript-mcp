@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Server configuration management.
+ */
+
 const DEFAULTS = {
   mode: 'stdio',
   port: 3000,
@@ -11,18 +15,33 @@ const DEFAULTS = {
   enableDnsRebindingProtection: false
 }
 
+/**
+ * Converts a value to a number, if possible.
+ * @param {*} value The value to convert.
+ * @returns {number|undefined} The converted number or undefined.
+ */
 function toNumber(value) {
   if (value === undefined || value === null || value === '') return undefined
   const n = Number(value)
   return Number.isFinite(n) ? n : undefined
 }
 
+/**
+ * Creates a server configuration object.
+ * @param {object} overrides The configuration overrides.
+ * @returns {object} The server configuration.
+ */
 export function createServerConfig(overrides = {}) {
   const config = { ...DEFAULTS, ...normalizeOverrides(overrides) }
   validateConfig(config)
   return config
 }
 
+/**
+ * Parses CLI flags into a server configuration object.
+ * @param {object} flags The CLI flags.
+ * @returns {object} The server configuration.
+ */
 export function parseCliConfig(flags) {
   const overrides = {}
   if (flags.mode) overrides.mode = String(flags.mode)
@@ -48,6 +67,11 @@ export function parseCliConfig(flags) {
   return createServerConfig(overrides)
 }
 
+/**
+ * Normalizes configuration overrides.
+ * @param {object} overrides The configuration overrides.
+ * @returns {object} The normalized overrides.
+ */
 function normalizeOverrides(overrides) {
   const out = { ...overrides }
   if (out.cors === true || out.cors === 'true' || out.cors === '*') {
@@ -90,6 +114,10 @@ function normalizeOverrides(overrides) {
   return out
 }
 
+/**
+ * Validates a server configuration object.
+ * @param {object} config The server configuration.
+ */
 function validateConfig(config) {
   if (!['stdio', 'remote'].includes(config.mode)) {
     throw new Error('invalid mode')

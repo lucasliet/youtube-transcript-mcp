@@ -15,7 +15,6 @@ const VALID_ERROR_CODES = new Set([
   'server_error',
   'network_error',
   'server_busy',
-  // SDK-specific error codes
   'mcp_protocol',
   'mcp_initialize',
   'mcp_shutdown',
@@ -35,7 +34,6 @@ const VALID_ERROR_CODES = new Set([
 export function createMcpErrorResponse(code, message, details = null, context = {}) {
   const normalizedCode = VALID_ERROR_CODES.has(code) ? code : 'server_error'
   
-  // Map error codes to SDK logging categories
   const categoryMap = {
     'invalid_request': SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
     'mcp_initialize': SDK_ERROR_CATEGORIES.MCP_INITIALIZE,
@@ -51,7 +49,6 @@ export function createMcpErrorResponse(code, message, details = null, context = 
   
   const logCategory = categoryMap[normalizedCode] || SDK_ERROR_CATEGORIES.SDK_ERROR
   
-  // Log the error with SDK logging system
   logSdkError(logCategory, message, undefined, {
     errorCode: normalizedCode,
     ...context
@@ -100,7 +97,13 @@ export function handleMcpProtocolError(error, context = {}) {
   }, context)
 }
 
-// Legacy function for backwards compatibility
+/**
+ * Legacy function for backwards compatibility.
+ * @param code Error code
+ * @param message Error message
+ * @param details Additional error details
+ * @returns MCP-compliant error response
+ */
 export function createErrorFrame(code, message, details = null) {
   return createMcpErrorResponse(code, message, details)
 }

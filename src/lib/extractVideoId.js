@@ -4,6 +4,6 @@
  * @returns The 11-character video ID or null when not found.
  */
 export function extractVideoId(url) {
-	const match = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|live\/)|youtu\.be\/)([\w-]{11})/);
+  const match = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|live\/)|youtu\.be\/)([\w-]{11})/)
   return match ? match[1] : null
 }

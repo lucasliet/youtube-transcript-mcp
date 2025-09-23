@@ -4,46 +4,29 @@ import { once } from 'node:events'
 import { randomUUID } from 'node:crypto'
 import { logSdkError, logSdkTransport, SDK_ERROR_CATEGORIES } from '../lib/log.js'
 
-const STREAMABLE_MODULE_PATHS = [
-  '@modelcontextprotocol/sdk/server/streamableHttp.js',
-  '@modelcontextprotocol/sdk/server/streamable-http.js',
-  '@modelcontextprotocol/sdk/dist/server/streamableHttp.js',
-  '@modelcontextprotocol/sdk/dist/server/streamable-http.js'
-]
+import { loadStreamableTransport } from './sdk-config.js'
 
-const SUPPORTED_PROTOCOL_VERSION = '2025-06-18'
-
-let streamableTransportPromise
-
-async function loadStreamableHTTPServerTransport() {
-  if (streamableTransportPromise === undefined) {
-    streamableTransportPromise = (async () => {
-      for (const specifier of STREAMABLE_MODULE_PATHS) {
-        try {
-          const module = await import(specifier)
-          if (module && module.StreamableHTTPServerTransport) {
-            return module.StreamableHTTPServerTransport
-          }
-        } catch (error) {
-          const message = typeof error === 'object' && error !== null ? String(error.message || error) : String(error)
-          if (error?.code !== 'ERR_MODULE_NOT_FOUND' && !message.includes('Cannot find module')) {
-            throw error
-          }
-        }
-      }
-      return null
-    })()
-  }
-  return streamableTransportPromise
-}
-
+/**
+ * Checks if the request body is an initialize request.
+ * @param {object} body The request body.
+ * @returns {boolean} True if it's an initialize request, false otherwise.
+ */
 function isInitializeRequestBody(body) {
   if (!body || typeof body !== 'object') return false
   if (body.method !== 'initialize') return false
   return true
 }
 
+const SUPPORTED_PROTOCOL_VERSION = '2025-06-18'
+
+/**
+ * Manages SDK transports (SSE and Streamable HTTP) for the remote server.
+ */
 export class SdkTransportRegistry {
+  /**
+   * @param {object} config The server configuration.
+   * @param {import('@modelcontextprotocol/sdk').Server} server The MCP server instance.
+   */
   constructor(config, server) {
     this.config = config
     this.server = server
@@ -52,6 +35,10 @@ export class SdkTransportRegistry {
     this.heartbeatTimers = new Map()
   }
 
+  /**
+   * Starts the HTTP server and listens for incoming connections.
+   * @returns {Promise<{baseUrl: string, port: number}>} The base URL and port of the server.
+   */
   async start() {
     this.httpServer = http.createServer(async (req, res) => {
       try {
@@ -122,6 +109,10 @@ export class SdkTransportRegistry {
     return { baseUrl, port: actualPort }
   }
 
+  /**
+   * Sets up CORS headers for the response.
+   * @param {import('http').ServerResponse} res The HTTP response object.
+   */
   setupCorsHeaders(res) {
     if (this.config.cors) {
       const origin = this.config.cors === true ? '*' : this.config.cors
@@ -136,9 +127,13 @@ export class SdkTransportRegistry {
     }
   }
 
+  /**
+   * Checks if the given origin is allowed by the CORS configuration.
+   * @param {string} origin The origin to check.
+   * @returns {boolean} True if the origin is allowed, false otherwise.
+   */
   isAllowedOrigin(origin) {
     if (!origin) return false
-    // Allow localhost origins for development
     if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
       return true
     }
@@ -151,18 +146,33 @@ export class SdkTransportRegistry {
     return process.env.NODE_ENV === 'development'
   }
 
+  /**
+   * Checks if the URL is an MCP endpoint.
+   * @param {string} url The URL to check.
+   * @returns {boolean} True if it's an MCP endpoint, false otherwise.
+   */
   isMcpEndpoint(url) {
     if (!url) return false
     const [pathname] = url.split('?')
     return pathname === '/mcp'
   }
 
+  /**
+   * Checks if the URL is a legacy SSE endpoint.
+   * @param {string} url The URL to check.
+   * @returns {boolean} True if it's a legacy SSE endpoint, false otherwise.
+   */
   isLegacySseEndpoint(url) {
     if (!url) return false
     const [pathname] = url.split('?')
     return pathname === '/mcp/events'
   }
 
+  /**
+   * Checks if the URL is a legacy message endpoint.
+   * @param {string} url The URL to check.
+   * @returns {boolean} True if it's a legacy message endpoint, false otherwise.
+   */
   isLegacyMessageEndpoint(url) {
     if (!url) return false
     const [pathname] = url.split('?')
@@ -171,8 +181,8 @@ export class SdkTransportRegistry {
 
   /**
    * Extracts the MCP protocol version header from the incoming request.
-   * @param req Incoming HTTP request instance.
-   * @returns Normalized protocol version string or undefined when missing.
+   * @param {import('http').IncomingMessage} req Incoming HTTP request instance.
+   * @returns {string|undefined} Normalized protocol version string or undefined when missing.
    */
   getProtocolVersionHeader(req) {
     const raw = req?.headers?.['mcp-protocol-version']
@@ -189,9 +199,9 @@ export class SdkTransportRegistry {
 
   /**
    * Validates whether the MCP protocol version header matches the supported version.
-   * @param req Incoming HTTP request instance.
-   * @param res Outgoing HTTP response used to report validation failures.
-   * @returns True when the request may proceed, false when the response was sent.
+   * @param {import('http').IncomingMessage} req Incoming HTTP request instance.
+   * @param {import('http').ServerResponse} res Outgoing HTTP response used to report validation failures.
+   * @returns {boolean} True when the request may proceed, false when the response was sent.
    */
   validateProtocolVersion(req, res) {
     const version = this.getProtocolVersionHeader(req)
@@ -217,6 +227,11 @@ export class SdkTransportRegistry {
     return false
   }
 
+  /**
+   * Handles an SSE connection request.
+   * @param {import('http').IncomingMessage} req The HTTP request object.
+   * @param {import('http').ServerResponse} res The HTTP response object.
+   */
   async handleSseConnection(req, res) {
     try {
       if (!this.validateProtocolVersion(req, res)) {
@@ -270,15 +285,19 @@ export class SdkTransportRegistry {
         this.activeTransports.delete(sessionId)
       })
     } catch (err) {
-      logSdkError(SDK_ERROR_CATEGORIES.SSE_CONNECTION, "SSE connection failed: " + err.message, undefined, {
+      logSdkError(SDK_ERROR_CATEGORIES.SSE_CONNECTION, 'SSE connection failed: ' + err.message, undefined, {
         endpoint: '/mcp',
         error: err.message
       })
-      // Don't try to send error response here - transport may have already started
       throw err
     }
   }
 
+  /**
+   * Handles an MCP POST request.
+   * @param {import('http').IncomingMessage} req The HTTP request object.
+   * @param {import('http').ServerResponse} res The HTTP response object.
+   */
   async handleMcpPost(req, res) {
     if (!this.validateProtocolVersion(req, res)) {
       return
@@ -314,8 +333,6 @@ export class SdkTransportRegistry {
       } finally {
         if (res.statusCode === 202) {
           tracked.lastActivity = activityTimestamp
-        } else {
-          tracked.lastActivity = null
         }
       }
       return
@@ -347,8 +364,14 @@ export class SdkTransportRegistry {
     await this.createStreamableSession(req, res, body)
   }
 
+  /**
+   * Creates a streamable session.
+   * @param {import('http').IncomingMessage} req The HTTP request object.
+   * @param {import('http').ServerResponse} res The HTTP response object.
+   * @param {object} body The request body.
+   */
   async createStreamableSession(req, res, body) {
-    const StreamableHTTPServerTransport = await loadStreamableHTTPServerTransport()
+    const StreamableHTTPServerTransport = await loadStreamableTransport()
     if (!StreamableHTTPServerTransport) {
       res.writeHead(501, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({
@@ -408,6 +431,12 @@ export class SdkTransportRegistry {
     }
   }
 
+  /**
+   * Handles a streamable GET request.
+   * @param {string} sessionId The session ID.
+   * @param {import('http').IncomingMessage} req The HTTP request object.
+   * @param {import('http').ServerResponse} res The HTTP response object.
+   */
   async handleStreamableGet(sessionId, req, res) {
     if (!this.validateProtocolVersion(req, res)) {
       return
@@ -425,6 +454,11 @@ export class SdkTransportRegistry {
     }
   }
 
+  /**
+   * Handles a streamable DELETE request.
+   * @param {import('http').IncomingMessage} req The HTTP request object.
+   * @param {import('http').ServerResponse} res The HTTP response object.
+   */
   async handleStreamableDelete(req, res) {
     if (!this.validateProtocolVersion(req, res)) {
       return
@@ -448,10 +482,19 @@ export class SdkTransportRegistry {
     }
   }
 
+  /**
+   * Checks if the server is at maximum client capacity.
+   * @returns {boolean} True if at capacity, false otherwise.
+   */
   isAtCapacity() {
     return this.activeTransports.size >= this.config.maxClients
   }
 
+  /**
+   * Reads and parses a JSON body from the request.
+   * @param {import('http').IncomingMessage} req The HTTP request object.
+   * @returns {Promise<object|undefined>} The parsed JSON body or undefined.
+   */
   async readJsonBody(req) {
     const chunks = []
     for await (const chunk of req) {
@@ -475,6 +518,11 @@ export class SdkTransportRegistry {
     }
   }
 
+  /**
+   * Extracts the session ID from the request headers or URL.
+   * @param {import('http').IncomingMessage} req The HTTP request object.
+   * @returns {string|undefined} The session ID or undefined.
+   */
   extractSessionId(req) {
     if (!req) return undefined
     const headerId = req.headers?.['mcp-session-id'] || req.headers?.['x-session-id'] || req.headers?.['X-Session-Id']
@@ -486,6 +534,12 @@ export class SdkTransportRegistry {
     return searchParams.get('sessionId') || undefined
   }
 
+  /**
+   * Sends an error response.
+   * @param {import('http').ServerResponse} res The HTTP response object.
+   * @param {number} statusCode The HTTP status code.
+   * @param {string} message The error message.
+   */
   sendError(res, statusCode, message) {
     res.writeHead(statusCode, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({ code: statusCode, message }))
@@ -493,10 +547,10 @@ export class SdkTransportRegistry {
 
   /**
    * Sends a migration guidance response for deprecated legacy endpoints.
-   * @param res Outgoing HTTP response instance.
-   * @param oldEndpoint Deprecated endpoint path accessed by the client.
-   * @param method HTTP method used by the client request.
-   * @returns Void.
+   * @param {import('http').ServerResponse} res Outgoing HTTP response instance.
+   * @param {string} oldEndpoint Deprecated endpoint path accessed by the client.
+   * @param {string} method HTTP method used by the client request.
+   * @returns {void}.
    */
   sendLegacyEndpointDeprecated(res, oldEndpoint, method) {
     const message = 'Use ' + method + ' /mcp instead'
@@ -514,11 +568,13 @@ export class SdkTransportRegistry {
     }))
   }
 
+  /**
+   * Closes all active transports and the HTTP server.
+   */
   async close() {
     for (const sessionId of this.activeTransports.keys()) {
       this.stopHeartbeat(sessionId)
     }
-    // Close all active transports
     for (const tracked of this.activeTransports.values()) {
       try {
         await tracked.transport.close?.()
@@ -528,7 +584,6 @@ export class SdkTransportRegistry {
     }
     this.activeTransports.clear()
 
-    // Close HTTP server
     if (this.httpServer) {
       await new Promise((resolve, reject) => {
         this.httpServer.close((err) => {
@@ -539,6 +594,10 @@ export class SdkTransportRegistry {
     }
   }
 
+  /**
+   * Starts the heartbeat for a tracked session.
+   * @param {object} tracked The tracked session object.
+   */
   startHeartbeat(tracked) {
     const interval = this.config.heartbeatIntervalMs
     const timeout = this.config.requestTimeoutMs
@@ -574,6 +633,10 @@ export class SdkTransportRegistry {
     this.heartbeatTimers.set(sessionId, timer)
   }
 
+  /**
+   * Stops the heartbeat for a given session ID.
+   * @param {string} sessionId The session ID.
+   */
   stopHeartbeat(sessionId) {
     const timer = this.heartbeatTimers.get(sessionId)
     if (timer) {
@@ -582,6 +645,11 @@ export class SdkTransportRegistry {
     }
   }
 
+  /**
+   * Cleans up expired sessions.
+   * @param {number} [timeoutMs] The timeout in milliseconds for expired sessions.
+   * @returns {string[]} An array of session IDs that were cleaned up.
+   */
   cleanupExpiredSessions(timeoutMs = this.config.requestTimeoutMs) {
     const expired = []
     const now = Date.now()

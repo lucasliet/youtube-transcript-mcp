@@ -45,4 +45,4 @@ Após cada implementação significativa (nova funcionalidade, mudança de arqui
 
 Esta regra garante que a documentação evolua junto com o código e mantenha a consistência do projeto.
 
-**Version**: 2.0.1 | **Ratified**: 2025-09-17 | **Last Amended**: 2025-09-17
+**Version**: 2.0.2 | **Ratified**: 2025-09-22 | **Last Amended**: 2025-09-22

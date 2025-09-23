@@ -12,7 +12,6 @@ export async function startSdkRemoteServer(overrides = {}) {
   
   registerTranscriptTool(server)
 
-  // Initialize transport registry with consolidated /mcp endpoint
   const registry = new SdkTransportRegistry(config, server)
   const serverInfo = await registry.start()
   
@@ -27,7 +26,6 @@ export async function startSdkRemoteServer(overrides = {}) {
   }
 }
 
-// Legacy function for backwards compatibility - will be removed
 export async function startRemoteServer(overrides = {}) {
   console.warn('startRemoteServer is deprecated. Use startSdkRemoteServer instead.')
   return startSdkRemoteServer(overrides)

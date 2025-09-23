@@ -74,21 +74,14 @@ export async function transcriptYt(args) {
   }
 }
 
+import { transcriptYtSchema } from '../lib/toolSchema.js'
+
 export const tool = ['transcript_yt', {
   schema: {
     type: 'function',
     function: {
-      name: 'transcript_yt',
-      description: 'Fetches YouTube transcript segments from a video URL for LLM consumption.',
-      parameters: {
-        type: 'object',
-        properties: {
-          videoUrl: { type: 'string', description: 'Full YouTube video URL.' },
-          preferredLanguages: { type: 'array', items: { type: 'string' }, description: "Optional ordered language codes preference, e.g., ['pt-BR','en']." }
-        },
-        required: ['videoUrl'],
-        additionalProperties: false
-      },
+      ...transcriptYtSchema,
+      parameters: transcriptYtSchema.inputSchema,
       strict: true
     }
   },

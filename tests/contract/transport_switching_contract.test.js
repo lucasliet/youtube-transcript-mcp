@@ -45,18 +45,18 @@ describe('Transport Switching Contract', () => {
       const isLegacyMsg = registry.isLegacyMessageEndpoint(path)
       
       switch(type) {
-        case 'primary':
-          assert.equal(isMcp, true, 'Should detect primary MCP endpoint')
-          break
-        case 'legacy-sse':
-          assert.equal(isLegacySse, true, 'Should detect legacy SSE endpoint')
-          break
-        case 'legacy-msg':
-          assert.equal(isLegacyMsg, true, 'Should detect legacy message endpoint')
-          break
-        case 'none':
-          assert.equal(isMcp || isLegacySse || isLegacyMsg, false, 'Should not detect invalid endpoint')
-          break
+      case 'primary':
+        assert.equal(isMcp, true, 'Should detect primary MCP endpoint')
+        break
+      case 'legacy-sse':
+        assert.equal(isLegacySse, true, 'Should detect legacy SSE endpoint')
+        break
+      case 'legacy-msg':
+        assert.equal(isLegacyMsg, true, 'Should detect legacy message endpoint')
+        break
+      case 'none':
+        assert.equal(isMcp || isLegacySse || isLegacyMsg, false, 'Should not detect invalid endpoint')
+        break
       }
     })
     
