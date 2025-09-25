@@ -14,8 +14,8 @@ test('integration: falls back to ASR when manual missing', async () => {
         playabilityStatus: { status: 'OK' },
         captions: {
           playerCaptionsTracklistRenderer: {
-            captionTracks: [ { kind: 'asr', languageCode: 'en', baseUrl: 'https://example/track_en_asr' } ],
-            audioTracks: [ { defaultCaptionTrackIndex: 0 } ]
+            captionTracks: [{ kind: 'asr', languageCode: 'en', baseUrl: 'https://example/track_en_asr' }],
+            audioTracks: [{ defaultCaptionTrackIndex: 0 }]
           }
         }
       })
@@ -37,4 +37,3 @@ test('integration: falls back to ASR when manual missing', async () => {
 function mkResponse(status, body, contentType = 'text/html') {
   return new globalThis.Response(body, { status, headers: { 'content-type': contentType } })
 }
-

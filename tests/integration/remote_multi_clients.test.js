@@ -23,7 +23,7 @@ test.skip('integration: remote handles multiple clients independently - LEGACY T
             captionTracks: [
               { baseUrl: 'https://example/a', languageCode: 'en', kind: 'standard' }
             ],
-            audioTracks: [ { defaultCaptionTrackIndex: 0 } ]
+            audioTracks: [{ defaultCaptionTrackIndex: 0 }]
           }
         }
       }), 'application/json')

@@ -18,7 +18,7 @@ test('integration: large transcript not truncated', async () => {
               captionTracks: [
                 { kind: 'standard', languageCode: 'en', baseUrl: 'https://example/track_en' }
               ],
-              audioTracks: [ { defaultCaptionTrackIndex: 0 } ]
+              audioTracks: [{ defaultCaptionTrackIndex: 0 }]
             }
           }
         })

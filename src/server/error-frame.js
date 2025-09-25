@@ -15,7 +15,6 @@ const VALID_ERROR_CODES = new Set([
   'server_error',
   'network_error',
   'server_busy',
-  // SDK-specific error codes
   'mcp_protocol',
   'mcp_initialize',
   'mcp_shutdown',
@@ -34,29 +33,27 @@ const VALID_ERROR_CODES = new Set([
  */
 export function createMcpErrorResponse(code, message, details = null, context = {}) {
   const normalizedCode = VALID_ERROR_CODES.has(code) ? code : 'server_error'
-  
-  // Map error codes to SDK logging categories
+
   const categoryMap = {
-    'invalid_request': SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
-    'mcp_initialize': SDK_ERROR_CATEGORIES.MCP_INITIALIZE,
-    'mcp_shutdown': SDK_ERROR_CATEGORIES.MCP_SHUTDOWN,
-    'session_invalid': SDK_ERROR_CATEGORIES.SESSION_INVALID,
-    'session_expired': SDK_ERROR_CATEGORIES.SESSION_EXPIRED,
-    'session_missing': SDK_ERROR_CATEGORIES.SESSION_MISSING,
-    'tool_error': SDK_ERROR_CATEGORIES.SDK_ERROR,
-    'server_error': SDK_ERROR_CATEGORIES.SDK_ERROR,
-    'network_error': SDK_ERROR_CATEGORIES.SDK_ERROR,
-    'timeout': SDK_ERROR_CATEGORIES.SDK_TIMEOUT
+    invalid_request: SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
+    mcp_initialize: SDK_ERROR_CATEGORIES.MCP_INITIALIZE,
+    mcp_shutdown: SDK_ERROR_CATEGORIES.MCP_SHUTDOWN,
+    session_invalid: SDK_ERROR_CATEGORIES.SESSION_INVALID,
+    session_expired: SDK_ERROR_CATEGORIES.SESSION_EXPIRED,
+    session_missing: SDK_ERROR_CATEGORIES.SESSION_MISSING,
+    tool_error: SDK_ERROR_CATEGORIES.SDK_ERROR,
+    server_error: SDK_ERROR_CATEGORIES.SDK_ERROR,
+    network_error: SDK_ERROR_CATEGORIES.SDK_ERROR,
+    timeout: SDK_ERROR_CATEGORIES.SDK_TIMEOUT
   }
-  
+
   const logCategory = categoryMap[normalizedCode] || SDK_ERROR_CATEGORIES.SDK_ERROR
-  
-  // Log the error with SDK logging system
+
   logSdkError(logCategory, message, undefined, {
     errorCode: normalizedCode,
     ...context
   })
-  
+
   return {
     code: normalizedCode,
     message,
@@ -93,14 +90,13 @@ export function createJsonRpcError(id, code, message, data = null) {
 export function handleMcpProtocolError(error, context = {}) {
   const errorCode = error.code || 'server_error'
   const errorMessage = error.message || 'An unexpected error occurred'
-  
+
   return createMcpErrorResponse(errorCode, errorMessage, {
     originalError: error.name,
     stack: error.stack
   }, context)
 }
 
-// Legacy function for backwards compatibility
 export function createErrorFrame(code, message, details = null) {
   return createMcpErrorResponse(code, message, details)
 }

@@ -11,26 +11,17 @@ const LOG_LEVELS = {
 }
 
 const SDK_ERROR_CATEGORIES = {
-  // MCP Protocol errors
   MCP_PROTOCOL: 'mcp_protocol',
   MCP_INITIALIZE: 'mcp_initialize',
   MCP_SHUTDOWN: 'mcp_shutdown',
-  
-  // Transport errors
   SSE_TRANSPORT: 'sse_transport',
   SSE_CONNECTION: 'sse_connection',
   SSE_MESSAGE: 'sse_message',
-  
-  // Session errors
   SESSION_INVALID: 'session_invalid',
   SESSION_EXPIRED: 'session_expired',
   SESSION_MISSING: 'session_missing',
-  
-  // Legacy compatibility
   LEGACY_ENDPOINT: 'legacy_endpoint',
   LEGACY_COMPATIBILITY: 'legacy_compatibility',
-  
-  // General SDK errors
   SDK_ERROR: 'sdk_error',
   SDK_CONFIG: 'sdk_config',
   SDK_TIMEOUT: 'sdk_timeout'
@@ -46,13 +37,12 @@ const SDK_ERROR_CATEGORIES = {
 export function logSdkError(category, message, level = LOG_LEVELS.ERROR, context = {}) {
   const timestamp = new Date().toISOString()
   let logMessage = `[${timestamp}] ${level} [${category}] ${message}`
-  
   if (context.sessionId) {
-    logMessage += " (session: " + context.sessionId + ")"
+    logMessage += ` (session: ${context.sessionId})`
   }
-  
+
   console.error(logMessage)
-  
+
   if (process.env.NODE_ENV === 'development' && Object.keys(context).length > 0) {
     const payload = {
       timestamp,
@@ -72,7 +62,7 @@ export function logSdkError(category, message, level = LOG_LEVELS.ERROR, context
  */
 export function logSdkTransport(event, details = {}) {
   const category = details.type === 'sse' ? SDK_ERROR_CATEGORIES.SSE_TRANSPORT : SDK_ERROR_CATEGORIES.SDK_ERROR
-  logSdkError(category, "Transport event: " + event, LOG_LEVELS.INFO, details)
+  logSdkError(category, `Transport event: ${event}`, LOG_LEVELS.INFO, details)
 }
 
 /**
@@ -82,14 +72,13 @@ export function logSdkTransport(event, details = {}) {
  */
 export function logMcpProtocol(event, details = {}) {
   const categoryMap = {
-    'initialize': SDK_ERROR_CATEGORIES.MCP_INITIALIZE,
-    'shutdown': SDK_ERROR_CATEGORIES.MCP_SHUTDOWN,
-    'request': SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
-    'response': SDK_ERROR_CATEGORIES.MCP_PROTOCOL
+    initialize: SDK_ERROR_CATEGORIES.MCP_INITIALIZE,
+    shutdown: SDK_ERROR_CATEGORIES.MCP_SHUTDOWN,
+    request: SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
+    response: SDK_ERROR_CATEGORIES.MCP_PROTOCOL
   }
-  
   const category = categoryMap[event] || SDK_ERROR_CATEGORIES.MCP_PROTOCOL
-  logSdkError(category, "MCP protocol event: " + event, LOG_LEVELS.INFO, details)
+  logSdkError(category, `MCP protocol event: ${event}`, LOG_LEVELS.INFO, details)
 }
 
 /**
@@ -119,5 +108,4 @@ export function logError(category, message) {
   logSdkError(sdkCategory, message)
 }
 
-// Export constants for external use
 export { LOG_LEVELS, SDK_ERROR_CATEGORIES }

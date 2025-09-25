@@ -26,7 +26,7 @@ describe('Transport Switching Contract', () => {
     assert.equal(registry.isMcpEndpoint('/mcp'), true, 'Should handle /mcp as SSE endpoint')
     assert.equal(registry.isLegacySseEndpoint('/mcp/events'), true, 'Should handle legacy /mcp/events as SSE')
     assert.equal(registry.isLegacyMessageEndpoint('/mcp/messages'), true, 'Should handle legacy /mcp/messages as message endpoint')
-    
+
     console.log('SSE transport endpoint handling validated')
   })
 
@@ -38,13 +38,13 @@ describe('Transport Switching Contract', () => {
       { path: '/mcp/messages', type: 'legacy-msg' },
       { path: '/invalid', type: 'none' }
     ]
-    
+
     endpoints.forEach(({ path, type }) => {
       const isMcp = registry.isMcpEndpoint(path)
       const isLegacySse = registry.isLegacySseEndpoint(path)
       const isLegacyMsg = registry.isLegacyMessageEndpoint(path)
-      
-      switch(type) {
+
+      switch (type) {
         case 'primary':
           assert.equal(isMcp, true, 'Should detect primary MCP endpoint')
           break
@@ -57,9 +57,11 @@ describe('Transport Switching Contract', () => {
         case 'none':
           assert.equal(isMcp || isLegacySse || isLegacyMsg, false, 'Should not detect invalid endpoint')
           break
+        default:
+          throw new Error(`Unhandled endpoint type: ${type}`)
       }
     })
-    
+
     console.log('Transport switching logic validated')
   })
 })

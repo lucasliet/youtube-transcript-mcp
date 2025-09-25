@@ -8,8 +8,8 @@ O pacote deve continuar focado na ferramenta `transcript_yt`, preservando contra
 ### II. Simplicidade operacional
 Implementações priorizam dependências nativas do Node.js 18+, evitando frameworks adicionais. Arquiteturas novas precisam caber no mesmo processo do CLI e manter a paridade entre os modos stdio e remoto, reutilizando módulos existentes sempre que possível.
 
-### III. Testes como gate de qualidade
-Toda alteração significativa começa por testes automatizados (contratos, integração e unidade) que reproduzem o cenário alvo. Somente após observar o RED é permitido implementar. Regressões no stdio são tratadas com prioridade máxima.
+### III. Testes e Qualidade como Gates
+Toda alteração significativa começa por testes automatizados (contratos, integração e unidade) que reproduzem o cenário alvo. Somente após observar o RED é permitido implementar. A qualidade do código é garantida por gates automatizados: `npm run lint`, `npm run jscpd`, `npm run depcheck` e `npm run coverage`. O relatório de cobertura deve permanecer em ≥90% de linhas e statements por arquivo em `src/`, sob pena de bloqueio de merge. Regressões no stdio são tratadas com prioridade máxima.
 
 ### IV. Observabilidade enxuta
 Logs devem ser categorizados (`invalid_request`, `tool_error`, etc.), com mensagens curtas e sem dados pessoais. Métricas externas ficam a cargo do operador; o projeto limita-se a fornecer hooks de log e códigos de erro consistentes.
@@ -23,16 +23,17 @@ Nenhum segredo é armazenado ou versionado. Configurações sensíveis são lida
 - Documentação (README, quickstart, AGENTS) precisa acompanhar toda nova superfície pública.
 - JSON é o formato canônico de troca; respostas MCP usam `content` com `type: "text"` serializado.
 - Flags de CLI devem aceitar override por string, booleano e número, com validação rígida.
+- Executar `npm run coverage` e corrigir qualquer arquivo abaixo de 90% de linhas/statements antes de abrir PR.
 
 ## Fluxo de desenvolvimento
 1. Ler a especificação ativa e atualizar `plan.md`/`tasks.md` conforme necessário.
 2. Criar ou ajustar testes cobrindo o comportamento desejado.
 3. Implementar a menor mudança que satisfaça os testes mantendo simplicidade.
-4. Rodar `npm test` e `npm run lint` antes de solicitar revisão.
+4. Rodar `npm test`, `npm run lint` e `npm run coverage` antes de solicitar revisão.
 5. Registrar notas de mudança e atualizar documentos afetados.
 
 ## Governance
-Esta constituição rege todas as PRs do repositório. Alterações devem ser documentadas neste arquivo com versão e data atualizadas. Revisores bloqueiam mudanças que violem os princípios acima ou que não comprovem testes e documentação atualizados.
+Esta constituição rege todas as PRs do repositório. Alterações devem ser documentadas neste arquivo com versão e data atualizadas. Revisores bloqueiam mudanças que violem os princípios acima ou que não comprovem testes, cobertura e documentação atualizados.
 
 ### VI. Documentação obrigatória após implementações
 Após cada implementação significativa (nova funcionalidade, mudança de arquitetura, ou correção crítica), os arquivos `AGENTS.md` e `constitution.md` devem ser atualizados para refletir o estado atual do projeto. Esta atualização é obrigatória e deve incluir:
@@ -44,4 +45,4 @@ Após cada implementação significativa (nova funcionalidade, mudança de arqui
 
 Esta regra garante que a documentação evolua junto com o código e mantenha a consistência do projeto.
 
-**Version**: 2.0.1 | **Ratified**: 2025-09-17 | **Last Amended**: 2025-09-17
+**Version**: 2.2.0 | **Ratified**: 2025-09-17 | **Last Amended**: 2025-09-25

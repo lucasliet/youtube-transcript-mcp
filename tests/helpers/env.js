@@ -40,6 +40,8 @@ export async function skipIfCannotBindLoopback(t) {
   if (available) {
     return true
   }
-  t.skip('Loopback networking disabled in sandboxed environment')
+  if (t && typeof t.skip === 'function') {
+    t.skip('Loopback networking disabled in sandboxed environment')
+  }
   return false
 }

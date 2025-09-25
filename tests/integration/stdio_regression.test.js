@@ -21,7 +21,7 @@ test('integration: stdio mode path still returns transcript', async () => {
             captionTracks: [
               { kind: 'standard', languageCode: 'en', baseUrl: 'https://example/stdio' }
             ],
-            audioTracks: [ { defaultCaptionTrackIndex: 0 } ]
+            audioTracks: [{ defaultCaptionTrackIndex: 0 }]
           }
         }
       }), 'application/json')

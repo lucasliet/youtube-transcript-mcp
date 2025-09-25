@@ -18,7 +18,7 @@ test('integration: duplicate segments removed', async () => {
               captionTracks: [
                 { kind: 'standard', languageCode: 'en', baseUrl: 'https://example/track_en' }
               ],
-              audioTracks: [ { defaultCaptionTrackIndex: 0 } ]
+              audioTracks: [{ defaultCaptionTrackIndex: 0 }]
             }
           }
         })

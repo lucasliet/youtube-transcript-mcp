@@ -13,4 +13,3 @@ test('normalizeSegments: trims, dedups and sorts', () => {
   assert.deepEqual(segs[0], { text: 'A', startInMs: 0, duration: 1000 })
   assert.deepEqual(segs[1], { text: 'B', startInMs: 2000, duration: 500 })
 })
-

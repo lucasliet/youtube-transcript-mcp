@@ -26,7 +26,7 @@ describe('SDK Session Management Contract', () => {
       headers: { 'mcp-session-id': 'test-session-123' },
       url: '/mcp'
     }
-    
+
     const sessionId = registry.extractSessionId(mockReq)
     assert.equal(sessionId, 'test-session-123', 'Should extract session ID from mcp-session-id header')
   })
@@ -46,7 +46,7 @@ describe('SDK Session Management Contract', () => {
       headers: {},
       url: '/mcp?sessionId=query-session-456&other=param'
     }
-    
+
     const sessionId = registry.extractSessionId(mockReq)
     assert.equal(sessionId, 'query-session-456', 'Should extract session ID from query parameter')
   })
@@ -56,7 +56,7 @@ describe('SDK Session Management Contract', () => {
       headers: {},
       url: '/mcp'
     }
-    
+
     const sessionId = registry.extractSessionId(mockReq)
     assert.equal(sessionId, undefined, 'Should return undefined when no session ID')
   })

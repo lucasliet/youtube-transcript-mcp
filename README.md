@@ -1,6 +1,7 @@
 # YouTube Transcript MCP Tool
 
 [![Run tests](https://github.com/lucasliet/youtube-transcript-mcp/actions/workflows/run-tests.yml/badge.svg?branch=main)](https://github.com/lucasliet/youtube-transcript-mcp/actions/workflows/run-tests.yml)
+[![Coverage Status](https://coveralls.io/repos/github/lucasliet/youtube-transcript-mcp/badge.svg?branch=main)](https://coveralls.io/github/lucasliet/youtube-transcript-mcp?branch=main)
 
 Ferramenta MCP para obter transcrições de vídeos do YouTube com timestamps e fornecer para agentes LLM.
 

@@ -65,7 +65,7 @@ curl -X POST http://127.0.0.1:3333/mcp \
     },
     "serverInfo": {
       "name": "youtube-transcript-mcp",
-      "version": "2.0.2"
+      "version": "2.0.3"
     }
   }
 }

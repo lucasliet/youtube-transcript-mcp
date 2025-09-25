@@ -5,6 +5,7 @@ import { createSdkServerConfig, createSdkServer } from '../../src/server/sdk-con
 
 const require = createRequire(import.meta.url)
 const { version } = require('../../package.json')
+
 const PROTOCOL_VERSION = '2025-06-18'
 
 describe('SDK Lifecycle Integration', () => {
@@ -78,10 +79,10 @@ describe('SDK Lifecycle Integration', () => {
             type: 'object',
             properties: {
               videoUrl: { type: 'string', description: 'Full YouTube video URL.' },
-              preferredLanguages: { 
-                type: 'array', 
-                items: { type: 'string' }, 
-                description: "Optional ordered language codes preference, e.g., ['pt-BR','en']." 
+              preferredLanguages: {
+                type: 'array',
+                items: { type: 'string' },
+                description: "Optional ordered language codes preference, e.g., ['pt-BR','en']."
               }
             },
             required: ['videoUrl'],

@@ -45,4 +45,3 @@ test('integration: unavailable returns null', async () => {
 function mkResponse(status, body, contentType = 'text/html') {
   return new globalThis.Response(body, { status, headers: { 'content-type': contentType } })
 }
-

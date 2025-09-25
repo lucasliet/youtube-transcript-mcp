@@ -9,6 +9,7 @@ import { registerTranscriptTool } from './server/register-transcript-tool.js'
 /**
  * CLI/MCP entrypoint. If --videoUrl is provided, runs a one-off fetch and prints JSON.
  * Otherwise, starts an MCP server over stdio exposing the transcript_yt tool.
+ * @returns Promise that resolves when the requested mode completes.
  */
 async function main() {
   const args = parseArgs(process.argv.slice(2))
@@ -29,10 +30,14 @@ async function main() {
 /**
  * Starts an MCP server over stdio with the transcript_yt tool.
  */
+/**
+ * Launches the stdio MCP server exposing the transcript tool locally.
+ * @returns Promise resolved once the server connects to stdio transport.
+ */
 async function startMcpServer() {
   const server = new McpServer({
     name: 'youtube-transcript-mcp',
-    version: '2.0.2'
+    version: '2.0.3'
   }, {
     capabilities: { tools: {} }
   })
@@ -42,6 +47,11 @@ async function startMcpServer() {
   await server.connect(transport)
 }
 
+/**
+ * Starts the remote MCP server mode using HTTP transports.
+ * @param config Parsed CLI configuration object.
+ * @returns Promise that resolves once signal handlers are attached.
+ */
 async function startRemoteMode(config) {
   const server = await startSdkRemoteServer({
     port: config.port,

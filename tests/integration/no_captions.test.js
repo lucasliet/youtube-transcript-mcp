@@ -25,4 +25,3 @@ test('integration: returns null when no captions', async () => {
 function mkResponse(status, body, contentType = 'text/html') {
   return new globalThis.Response(body, { status, headers: { 'content-type': contentType } })
 }
-

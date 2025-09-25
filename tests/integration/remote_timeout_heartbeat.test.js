@@ -21,7 +21,9 @@ test('integration: heartbeat emits and timeouts trigger error', async (t) => {
       return mkResponse(200, '<html>"INNERTUBE_API_KEY":"abc123"</html>')
     }
     if (url.startsWith('https://www.youtube.com/youtubei/v1/player?key=')) {
-      await new Promise((resolve) => globalThis.setTimeout(resolve, 200))
+      await new Promise((resolve) => {
+        globalThis.setTimeout(resolve, 200)
+      })
       return mkResponse(200, JSON.stringify({
         playabilityStatus: { status: 'OK' },
         captions: {
@@ -29,13 +31,15 @@ test('integration: heartbeat emits and timeouts trigger error', async (t) => {
             captionTracks: [
               { baseUrl: 'https://example/slow', languageCode: 'en', kind: 'standard' }
             ],
-            audioTracks: [ { defaultCaptionTrackIndex: 0 } ]
+            audioTracks: [{ defaultCaptionTrackIndex: 0 }]
           }
         }
       }), 'application/json')
     }
     if (url === 'https://example/slow') {
-      await new Promise((resolve) => globalThis.setTimeout(resolve, 200))
+      await new Promise((resolve) => {
+        globalThis.setTimeout(resolve, 200)
+      })
       return mkResponse(200, '<transcript><text start="0.0" dur="0.5">Slow</text></transcript>')
     }
     if (typeof originalFetch === 'function') {
@@ -76,12 +80,14 @@ test('integration: heartbeat emits and timeouts trigger error', async (t) => {
       if (boundary !== -1) {
         const raw = buffer.slice(0, boundary)
         buffer = buffer.slice(boundary + 2)
-        if (raw.trim().length === 0) continue
-        return parseEvent(raw)
+        if (raw.trim().length > 0) {
+          return parseEvent(raw)
+        }
+      } else {
+        const { value, done } = await iterator.next()
+        if (done) throw new Error('stream ended unexpectedly')
+        buffer += decoder.decode(value, { stream: true })
       }
-      const { value, done } = await iterator.next()
-      if (done) throw new Error('stream ended unexpectedly')
-      buffer += decoder.decode(value, { stream: true })
     }
     throw new Error('event timeout')
   }

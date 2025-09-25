@@ -28,13 +28,13 @@ describe('Session Cleanup Integration', () => {
     // Add sessions
     registry.activeTransports.set('session-1', mockTransport1)
     registry.activeTransports.set('session-2', mockTransport2)
-    
+
     assert.equal(registry.activeTransports.size, 2, 'Should track active sessions')
-    
+
     // Simulate cleanup
     registry.activeTransports.clear()
     assert.equal(registry.activeTransports.size, 0, 'Should clean up all sessions')
-    
+
     console.log('Session lifecycle management validated')
   })
 
@@ -43,10 +43,10 @@ describe('Session Cleanup Integration', () => {
 
     registry.activeTransports.set('test-session', mockTransport)
     assert.equal(registry.activeTransports.size, 1, 'Should add session')
-    
+
     registry.activeTransports.delete('test-session')
     assert.equal(registry.activeTransports.size, 0, 'Should remove session')
-    
+
     console.log('Individual session cleanup validated')
   })
 })

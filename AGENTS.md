@@ -3,6 +3,7 @@
 ## Core Principles & Governance
 All contributions to this repository are governed by the principles and guidelines outlined in our constitution. Before contributing, please familiarize yourself with this document:
 - **Constitution:** `/.specify/memory/constitution.md`
+@.specify/memory/constitution.md
 
 This document establishes the core mission, operational rules, and development workflow to ensure the project remains simple, robust, and focused.
 
@@ -28,6 +29,7 @@ Try to run tests with elevated priviledges (not sudo)
 - `npm run dev:remote`: Observa mudanças e reinicia automaticamente em modo remoto.
 - `npm test`: Executa toda a suíte (`node --test tests/**/*.test.js`).
 - `npm run lint`: Verifica o projeto com ESLint.
+- `npm run coverage`: Executa testes com `c8`, gera relatórios (`lcov`, texto) e aplica o gate de cobertura mínima de 90% por arquivo (linhas/estatements).
 - Execução one‑off: `node src/cli.js --videoUrl "https://www.youtube.com/watch?v=VIDEO_ID" --preferredLanguages "pt-BR,en"`.
 - Host MCP (via GitHub): `npx -y --package=github:lucasliet/youtube-transcript-mcp#main youtube-transcript-mcp`.
 
@@ -43,6 +45,7 @@ Try to run tests with elevated priviledges (not sudo)
 - Padrão de nomes: `tests/unit/*.test.js`, `tests/integration/*.test.js`.
 - Cobrimos: `extractVideoId`, `chooseTrack`, parsing (`transcript` e `timedtext`), fluxo principal (mock de `fetch`).
 - Rodar localmente: `npm test`. Adicione novos testes junto com a mudança.
+- Cobertura mínima: 90% de linhas e statements por arquivo em `src/`, validada via `npm run coverage`.
 
 ## Commit & Pull Request Guidelines
 - Commits curtos, no imperativo, descrevendo a ação e escopo (ex.: `mcp: fix tools/call content type`).

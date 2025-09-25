@@ -5,7 +5,7 @@ import { createSdkServerConfig } from '../../src/server/sdk-config.js'
 describe('SDK Configuration Unit Tests', () => {
   it('should create default SDK configuration', () => {
     const config = createSdkServerConfig({})
-    
+
     assert.equal(config.mode, 'remote', 'Should default to remote mode')
     assert.equal(config.port, 3000, 'Should use default port')
     assert.equal(config.host, '0.0.0.0', 'Should use default host')
@@ -32,9 +32,9 @@ describe('SDK Configuration Unit Tests', () => {
       allowedHosts: '127.0.0.1',
       enableDnsRebindingProtection: true
     }
-    
+
     const config = createSdkServerConfig(overrides)
-    
+
     assert.equal(config.port, 8080, 'Should override port')
     assert.equal(config.host, '127.0.0.1', 'Should override host')
     assert.equal(config.cors, '*', 'Should override CORS')
@@ -51,7 +51,7 @@ describe('SDK Configuration Unit Tests', () => {
     assert.doesNotThrow(() => createSdkServerConfig({ port: 8080 }))
     assert.doesNotThrow(() => createSdkServerConfig({ host: '127.0.0.1' }))
     assert.doesNotThrow(() => createSdkServerConfig({ cors: '*' }))
-    
+
     // Invalid configurations should throw
     assert.throws(() => createSdkServerConfig({ port: -1 }), 'Should reject negative port')
     assert.throws(() => createSdkServerConfig({ port: 99999 }), 'Should reject invalid port')
@@ -71,7 +71,7 @@ describe('SDK Configuration Unit Tests', () => {
       { input: { cors: '*' }, expected: '*' },
       { input: { cors: 'https://example.com' }, expected: 'https://example.com' }
     ]
-    
+
     corsConfigs.forEach(({ input, expected }) => {
       const config = createSdkServerConfig(input)
       assert.equal(config.cors, expected, 'CORS config ' + JSON.stringify(input) + ' should result in ' + String(expected))
@@ -80,24 +80,24 @@ describe('SDK Configuration Unit Tests', () => {
 
   it('should validate heartbeat and timeout relationship', () => {
     // Valid combinations should not throw
-    assert.doesNotThrow(() => createSdkServerConfig({ 
-      heartbeatIntervalMs: 10000, 
-      requestTimeoutMs: 30000 
+    assert.doesNotThrow(() => createSdkServerConfig({
+      heartbeatIntervalMs: 10000,
+      requestTimeoutMs: 30000
     }))
-    
+
     // Invalid combinations should throw
-    assert.throws(() => createSdkServerConfig({ 
-      heartbeatIntervalMs: 60000, 
-      requestTimeoutMs: 30000 
+    assert.throws(() => createSdkServerConfig({
+      heartbeatIntervalMs: 60000,
+      requestTimeoutMs: 30000
     }), 'Should reject heartbeat longer than timeout')
   })
 
   it('should provide consistent server info', () => {
     const config1 = createSdkServerConfig({})
     const config2 = createSdkServerConfig({ port: 8080 })
-    
+
     assert.deepEqual(config1.serverInfo, config2.serverInfo, 'Server info should be consistent across configs')
     assert.equal(config1.serverInfo.name, 'youtube-transcript-mcp', 'Should have correct server name')
-    assert.equal(config1.serverInfo.version, '2.0.2', 'Should have correct server version')
+    assert.equal(config1.serverInfo.version, '2.0.3', 'Should have correct server version')
   })
 })

@@ -28,33 +28,60 @@ export async function openEventStream(server, headers = {}) {
   const finished = new Promise((resolve) => {
     finish = resolve
   })
-  ;(async () => {
+
+  const drainBuffer = () => {
+    const findBoundary = () => {
+      const lf = buffer.indexOf('\n\n')
+      const crlf = buffer.indexOf('\r\n\r\n')
+      if (lf === -1 && crlf === -1) return { idx: -1, len: 0 }
+      if (lf === -1) return { idx: crlf, len: 4 }
+      if (crlf === -1) return { idx: lf, len: 2 }
+      return crlf < lf ? { idx: crlf, len: 4 } : { idx: lf, len: 2 }
+    }
+    let { idx: boundary, len: sepLen } = findBoundary()
+    while (boundary !== -1) {
+      const raw = buffer.slice(0, boundary)
+      buffer = buffer.slice(boundary + sepLen)
+      if (raw.trim()) {
+        const evt = parseEvent(raw)
+        if (waiters.length) {
+          waiters.shift().resolve(evt)
+        } else {
+          events.push(evt)
+        }
+      }
+      const nextBoundary = findBoundary()
+      boundary = nextBoundary.idx
+      sepLen = nextBoundary.len
+    }
+  }
+
+  /**
+   * Consumes the SSE stream and dispatches parsed events to listeners.
+   * @returns Promise resolving when the stream finishes or aborts.
+   */
+  async function consumeStream() {
     try {
       for await (const chunk of stream) {
         buffer += decoder.decode(chunk, { stream: true })
-        let boundary
-        while ((boundary = buffer.indexOf('\n\n')) !== -1) {
-          const raw = buffer.slice(0, boundary)
-          buffer = buffer.slice(boundary + 2)
-          if (!raw.trim()) continue
-          const evt = parseEvent(raw)
-          if (waiters.length) {
-            waiters.shift().resolve(evt)
-          } else {
-            events.push(evt)
-          }
-        }
+        drainBuffer()
       }
+      buffer += decoder.decode()
+      drainBuffer()
     } catch (err) {
       if (err?.name !== 'AbortError') {
         waitersSliceReject(waiters, err)
       }
     } finally {
+      buffer += decoder.decode()
+      drainBuffer()
       ended = true
       waitersSliceReject(waiters, new Error('stream ended'))
       finish?.()
     }
-  })().catch(() => {})
+  }
+
+  consumeStream().catch(() => {})
 
   async function nextEvent(timeoutMs = DEFAULT_TIMEOUT) {
     if (events.length) return events.shift()
