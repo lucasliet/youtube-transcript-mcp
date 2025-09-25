@@ -1,5 +1,5 @@
 import { describe, it, mock } from 'node:test'
-import assert from 'node:assert'
+import assert from 'node:assert/strict'
 import { Readable } from 'node:stream'
 import fs from 'node:fs/promises'
 import path from 'node:path'

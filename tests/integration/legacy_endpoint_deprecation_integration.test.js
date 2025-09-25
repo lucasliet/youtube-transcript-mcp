@@ -25,8 +25,8 @@ describe('Legacy Endpoint Migration', () => {
     }
   })
 
-  it('should return migration guidance for legacy SSE endpoint', async () => {
-    if (!baseUrl) return
+  it('should return migration guidance for legacy SSE endpoint', async (t) => {
+    if (!baseUrl) return t.skip('Loopback unavailable; skipping legacy SSE check')
     const response = await fetch(baseUrl + '/mcp/events', { headers: { Accept: 'text/event-stream' } })
     assert.equal(response.status, 404, 'Legacy SSE endpoint should return 404')
     const payload = await response.json()
@@ -35,8 +35,8 @@ describe('Legacy Endpoint Migration', () => {
     assert.equal(payload.error.migration.newEndpoint, '/mcp', 'Migration guidance should include new endpoint')
   })
 
-  it('should return migration guidance for legacy message endpoint', async () => {
-    if (!baseUrl) return
+  it('should return migration guidance for legacy message endpoint', async (t) => {
+    if (!baseUrl) return t.skip('Loopback unavailable; skipping legacy message check')
     const response = await fetch(baseUrl + '/mcp/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

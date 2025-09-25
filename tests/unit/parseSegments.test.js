@@ -40,5 +40,5 @@ test('parseTimedtext ignores empty paragraphs', () => {
 
 test('decodeHtml decodes supported entities', () => {
   const decoded = decodeHtml('&lt;a&gt;&amp;&quot;&#39;&gt;')
-  assert.equal(decoded, "<a>&\"'>")
+  assert.equal(decoded, '<a>&"\'>' )
 })
