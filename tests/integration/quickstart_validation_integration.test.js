@@ -12,13 +12,17 @@ describe('Quickstart Validation Scenarios', () => {
   let baseUrl
 
   before(async (t) => {
-    if (!await skipIfCannotBindLoopback(t)) return
+    const canBind = await skipIfCannotBindLoopback(t)
+    if (!canBind) {
+      return undefined
+    }
     const config = createSdkServerConfig({ port: 0, host: '127.0.0.1' })
     const server = createSdkServer(config)
     registerTranscriptTool(server)
     registry = new SdkTransportRegistry(config, server)
     const info = await registry.start()
     baseUrl = info.baseUrl
+    return undefined
   })
 
   after(async () => {
@@ -28,16 +32,23 @@ describe('Quickstart Validation Scenarios', () => {
   })
 
   it('should expose SSE endpoint and session identifier', async (t) => {
-    if (!baseUrl) return t.skip('Transport registry not started (loopback unavailable)')
+    if (!baseUrl) {
+      t.skip('Transport registry not started (loopback unavailable)')
+      return undefined
+    }
     const connection = await openSseConnection(baseUrl)
     assert.equal(typeof connection.sessionId, 'string', 'Session identifier should be available')
     assert.equal(connection.sessionId.length > 0, true, 'Session identifier should not be empty')
     assert.equal(typeof connection.headerSessionId, 'string', 'Header should include session identifier')
     await connection.close()
+    return undefined
   })
 
   it('should accept initialize and tools/list requests over SSE transport', async (t) => {
-    if (!baseUrl) return t.skip('Transport registry not started (loopback unavailable)')
+    if (!baseUrl) {
+      t.skip('Transport registry not started (loopback unavailable)')
+      return undefined
+    }
     const connection = await openSseConnection(baseUrl)
 
     const initializeResponse = await postSseMessage(baseUrl, connection.sessionId, {
@@ -69,10 +80,14 @@ describe('Quickstart Validation Scenarios', () => {
     assert.equal(shutdownResponse.status, 202, 'shutdown request should be accepted')
 
     await connection.close()
+    return undefined
   })
 
   it('should reject tool access without session identifier', async (t) => {
-    if (!baseUrl) return t.skip('Transport registry not started (loopback unavailable)')
+    if (!baseUrl) {
+      t.skip('Transport registry not started (loopback unavailable)')
+      return undefined
+    }
     const response = await fetch(baseUrl + '/mcp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -81,6 +96,7 @@ describe('Quickstart Validation Scenarios', () => {
     assert.equal(response.status, 400, 'Missing session should return bad request')
     const payload = await response.json()
     assert.equal(payload.error, 'Missing session ID', 'Response should explain missing session identifier')
+    return undefined
   })
 })
 

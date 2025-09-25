@@ -50,11 +50,17 @@ export async function openEventStream(server, headers = {}) {
           events.push(evt)
         }
       }
-      ;({ idx: boundary, len: sepLen } = findBoundary())
+      const nextBoundary = findBoundary()
+      boundary = nextBoundary.idx
+      sepLen = nextBoundary.len
     }
   }
 
-  ;(async () => {
+  /**
+   * Consumes the SSE stream and dispatches parsed events to listeners.
+   * @returns Promise resolving when the stream finishes or aborts.
+   */
+  async function consumeStream() {
     try {
       for await (const chunk of stream) {
         buffer += decoder.decode(chunk, { stream: true })
@@ -73,7 +79,9 @@ export async function openEventStream(server, headers = {}) {
       waitersSliceReject(waiters, new Error('stream ended'))
       finish?.()
     }
-  })().catch(() => {})
+  }
+
+  consumeStream().catch(() => {})
 
   async function nextEvent(timeoutMs = DEFAULT_TIMEOUT) {
     if (events.length) return events.shift()
