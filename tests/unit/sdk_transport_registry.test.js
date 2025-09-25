@@ -179,7 +179,9 @@ describe('Transport Registry Unit Tests', () => {
     localRegistry.activeTransports.set('session-1', tracked)
 
     localRegistry.startHeartbeat(tracked)
-    await new Promise((resolve) => setTimeout(resolve, 25))
+    await new Promise((resolve) => {
+      setTimeout(resolve, 25)
+    })
     localRegistry.stopHeartbeat('session-1')
 
     assert.equal(localRegistry.activeTransports.has('session-1'), false)
@@ -229,7 +231,9 @@ describe('Transport Registry Unit Tests', () => {
     localRegistry.activeTransports.set('session-ended', tracked)
 
     localRegistry.startHeartbeat(tracked)
-    await new Promise((resolve) => setTimeout(resolve, 5))
+    await new Promise((resolve) => {
+      setTimeout(resolve, 5)
+    })
 
     assert.equal(localRegistry.activeTransports.has('session-ended'), false)
     assert.equal(localRegistry.heartbeatTimers.has('session-ended'), false)
@@ -284,7 +288,7 @@ describe('Transport Registry Unit Tests', () => {
       sessionId: 'streamable-session',
       type: 'streamable',
       transport: {
-        async handleRequest(req, res) {
+        async handleRequest(_req, _res) {
           handlerCalls += 1
         }
       },
@@ -356,10 +360,10 @@ describe('Transport Registry Unit Tests', () => {
     const tracked = {
       type: 'streamable',
       transport: {
-        async handleRequest(req, res, body) {
+        async handleRequest(_req, response, body) {
           handled += 1
-          res.writeHead?.(200, { 'Content-Type': 'application/json' })
-          res.end?.(JSON.stringify(body))
+          response.writeHead?.(200, { 'Content-Type': 'application/json' })
+          response.end?.(JSON.stringify(body))
         }
       },
       lastActivity: 0
@@ -502,7 +506,9 @@ describe('Transport Registry Unit Tests', () => {
 
     const config = createSdkServerConfig({ port: 9090 })
     const serverStub = {
-      async connect() {}
+      async connect() {
+        return null
+      }
     }
     const localRegistry = new SdkTransportRegistry(config, serverStub)
 
@@ -576,7 +582,11 @@ describe('Transport Registry Unit Tests', () => {
 
   it('start routes incoming requests based on method and path', async () => {
     const config = createSdkServerConfig({ port: 9797 })
-    const serverStub = { async connect() {} }
+    const serverStub = {
+      async connect() {
+        return null
+      }
+    }
     const localRegistry = new SdkTransportRegistry(config, serverStub)
     let capturedHandler
     const createServerStub = mock.method(http, 'createServer', (fn) => {

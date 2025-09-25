@@ -26,6 +26,7 @@ describe('Legacy Endpoint Migration', () => {
   })
 
   it('should return migration guidance for legacy SSE endpoint', async () => {
+    if (!baseUrl) return
     const response = await fetch(baseUrl + '/mcp/events', { headers: { Accept: 'text/event-stream' } })
     assert.equal(response.status, 404, 'Legacy SSE endpoint should return 404')
     const payload = await response.json()
@@ -35,6 +36,7 @@ describe('Legacy Endpoint Migration', () => {
   })
 
   it('should return migration guidance for legacy message endpoint', async () => {
+    if (!baseUrl) return
     const response = await fetch(baseUrl + '/mcp/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

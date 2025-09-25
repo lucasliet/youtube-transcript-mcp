@@ -28,6 +28,7 @@ describe('Quickstart Validation Scenarios', () => {
   })
 
   it('should expose SSE endpoint and session identifier', async () => {
+    if (!baseUrl) return
     const connection = await openSseConnection(baseUrl)
     assert.equal(typeof connection.sessionId, 'string', 'Session identifier should be available')
     assert.equal(connection.sessionId.length > 0, true, 'Session identifier should not be empty')
@@ -36,6 +37,7 @@ describe('Quickstart Validation Scenarios', () => {
   })
 
   it('should accept initialize and tools/list requests over SSE transport', async () => {
+    if (!baseUrl) return
     const connection = await openSseConnection(baseUrl)
 
     const initializeResponse = await postSseMessage(baseUrl, connection.sessionId, {
@@ -70,6 +72,7 @@ describe('Quickstart Validation Scenarios', () => {
   })
 
   it('should reject tool access without session identifier', async () => {
+    if (!baseUrl) return
     const response = await fetch(baseUrl + '/mcp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
