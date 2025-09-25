@@ -1,6 +1,6 @@
 {
   "name": "youtube-transcript-mcp",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "MCP tool to fetch YouTube transcripts for LLMs",
   "license": "MIT",
   "type": "module",
@@ -14,7 +14,10 @@
     "start:stdio": "node src/cli.js",
     "start:remote": "node src/cli.js --mode remote --port 3333 --cors *",
     "dev:stdio": "node --watch src/cli.js",
-    "dev:remote": "node --watch src/cli.js --mode remote --port 3333 --cors *"
+    "dev:remote": "node --watch src/cli.js --mode remote --port 3333 --cors *",
+    "jscpd": "jscpd src --reporters console --threshold 0.1",
+    "depcheck": "depcheck --specials=eslint --ignores=c8,eslint-config-airbnb-base",
+    "coverage": "c8 --reporter=lcov --reporter=text --check-coverage --per-file --lines 90 --statements 90 npm test"
   },
   "engines": {
     "node": ">=18"
@@ -23,6 +26,14 @@
     "@modelcontextprotocol/sdk": "^0.5.0"
   },
   "devDependencies": {
-    "eslint": "^8.57.1"
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.36.0",
+    "c8": "^10.1.3",
+    "depcheck": "^1.4.7",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.32.0",
+    "globals": "^15.15.0",
+    "jscpd": "^4.0.5"
   }
 }

@@ -1,4 +1,3 @@
-
 /**
  * @typedef {object} TranscriptSegment
  * @property {string} text The caption text content.
@@ -24,17 +23,17 @@ export function parseSegments(xml) {
  * @returns {TranscriptSegment[]} Segments list.
  */
 export function parseTranscriptTexts(xml) {
-  const out = []
-  const textRe = /<text[^>]*start="([^"]+)"[^>]*dur="([^"]+)"[^>]*>([\s\S]*?)<\/text>/g
-  let m
-  while ((m = textRe.exec(xml)) !== null) {
-    const text = decodeHtml(String(m[3] || '')).trim()
-    if (!text) continue
-    const startMs = Math.round(Number(m[1] || 0) * 1000)
-    const durMs = Math.round(Number(m[2] || 0) * 1000)
-    out.push({ text, startInMs: startMs, duration: durMs })
+  const segments = []
+  const textMatches = xml.matchAll(/<text[^>]*start="([^"]+)"[^>]*dur="([^"]+)"[^>]*>([\s\S]*?)<\/text>/g)
+  for (const match of textMatches) {
+    const text = decodeHtml(String(match[3] || '')).trim()
+    if (text) {
+      const startMs = Math.round(Number(match[1] || 0) * 1000)
+      const durationMs = Math.round(Number(match[2] || 0) * 1000)
+      segments.push({ text, startInMs: startMs, duration: durationMs })
+    }
   }
-  return out
+  return segments
 }
 
 /**
@@ -43,18 +42,18 @@ export function parseTranscriptTexts(xml) {
  * @returns {TranscriptSegment[]} Segments list.
  */
 export function parseTimedtext(xml) {
-  const out = []
-  const pRe = /<p[^>]*\bt="(\d+)"[^>]*\bd="(\d+)"[^>]*>([\s\S]*?)<\/p>/g
-  let p
-  while ((p = pRe.exec(xml)) !== null) {
-    const start = Number(p[1] || 0)
-    const duration = Number(p[2] || 0)
-    const inner = String(p[3] || '')
+  const segments = []
+  const paragraphMatches = xml.matchAll(/<p[^>]*\bt="(\d+)"[^>]*\bd="(\d+)"[^>]*>([\s\S]*?)<\/p>/g)
+  for (const match of paragraphMatches) {
+    const start = Number(match[1] || 0)
+    const duration = Number(match[2] || 0)
+    const inner = String(match[3] || '')
     const text = decodeHtml(inner.replace(/<[^>]+>/g, '')).trim()
-    if (!text) continue
-    out.push({ text, startInMs: start, duration })
+    if (text) {
+      segments.push({ text, startInMs: start, duration })
+    }
   }
-  return out
+  return segments
 }
 
 /**

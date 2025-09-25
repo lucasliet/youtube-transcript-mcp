@@ -11,18 +11,33 @@ const DEFAULTS = {
   enableDnsRebindingProtection: false
 }
 
+/**
+ * Converts a string or numeric input to a finite number when possible.
+ * @param value Raw input value from CLI flags or overrides.
+ * @returns Parsed number or undefined when conversion fails.
+ */
 function toNumber(value) {
   if (value === undefined || value === null || value === '') return undefined
   const n = Number(value)
   return Number.isFinite(n) ? n : undefined
 }
 
+/**
+ * Produces a normalized server configuration object.
+ * @param overrides Partial configuration overrides supplied by callers.
+ * @returns Fully validated configuration merged with defaults.
+ */
 export function createServerConfig(overrides = {}) {
   const config = { ...DEFAULTS, ...normalizeOverrides(overrides) }
   validateConfig(config)
   return config
 }
 
+/**
+ * Parses CLI flags to build a server configuration.
+ * @param flags Key/value pairs parsed from CLI arguments.
+ * @returns Validated server configuration object.
+ */
 export function parseCliConfig(flags) {
   const overrides = {}
   if (flags.mode) overrides.mode = String(flags.mode)
@@ -48,6 +63,11 @@ export function parseCliConfig(flags) {
   return createServerConfig(overrides)
 }
 
+/**
+ * Normalizes override inputs to consistent canonical forms.
+ * @param overrides Partial configuration overrides.
+ * @returns Overrides sanitized for validation and merging.
+ */
 function normalizeOverrides(overrides) {
   const out = { ...overrides }
   if (out.cors === true || out.cors === 'true' || out.cors === '*') {
@@ -90,6 +110,10 @@ function normalizeOverrides(overrides) {
   return out
 }
 
+/**
+ * Validates the resulting server configuration and throws on invalid state.
+ * @param config Configuration object produced by createServerConfig.
+ */
 function validateConfig(config) {
   if (!['stdio', 'remote'].includes(config.mode)) {
     throw new Error('invalid mode')

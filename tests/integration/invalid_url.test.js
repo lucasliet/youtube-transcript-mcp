@@ -6,4 +6,3 @@ test('integration: invalid URL returns null', async () => {
   const res = await transcriptYt({ videoUrl: 'https://example.com/watch?v=xyz' })
   assert.equal(res, null)
 })
-

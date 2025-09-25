@@ -28,3 +28,37 @@ test('chooseTrack: uses default indices when no preferred', () => {
   assert.deepEqual(picked, { url: 'u2', lang: 'es' })
 })
 
+test('chooseTrack: uses default caption track index when matches absent', () => {
+  const tracks = [
+    { kind: 'standard', languageCode: 'de', baseUrl: 'u1' },
+    { kind: 'standard', languageCode: 'it', baseUrl: 'u2&fmt=srv3' }
+  ]
+  const picked = __testables.chooseTrack(tracks, ['fr'], 1, undefined)
+  assert.deepEqual(picked, { url: 'u2', lang: 'it' })
+})
+
+test('chooseTrack: uses translation source fallback when default index missing', () => {
+  const tracks = [
+    { kind: 'standard', languageCode: 'pt', baseUrl: 'manual1' },
+    { kind: 'asr', languageCode: 'pt', baseUrl: 'asr1' },
+    { kind: 'standard', languageCode: 'es', baseUrl: 'manual2&fmt=srv3' }
+  ]
+  const picked = __testables.chooseTrack(tracks, ['fr'], undefined, [2])
+  assert.deepEqual(picked, { url: 'manual2', lang: 'es' })
+})
+
+test('chooseTrack: falls back to first manual when no other selection possible', () => {
+  const tracks = [
+    { kind: 'standard', languageCode: 'ja', baseUrl: 'manual' }
+  ]
+  const picked = __testables.chooseTrack(tracks, ['fr'], undefined, undefined)
+  assert.deepEqual(picked, { url: 'manual', lang: 'ja' })
+})
+
+test('chooseTrack: falls back to first asr when manual unavailable', () => {
+  const tracks = [
+    { kind: 'asr', languageCode: 'de', baseUrl: 'asr&fmt=srv3' }
+  ]
+  const picked = __testables.chooseTrack(tracks, ['pt'], undefined, undefined)
+  assert.deepEqual(picked, { url: 'asr', lang: 'de' })
+})

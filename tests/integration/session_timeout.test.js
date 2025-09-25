@@ -29,9 +29,9 @@ describe('Session Timeout Cleanup Test', () => {
       createdAt: Date.now() - 60000, // 1 minute ago
       transport: { close: () => Promise.resolve() }
     }
-    
+
     registry.activeTransports.set('timeout-session', mockTransport)
-    
+
     assert.equal(registry.activeTransports.size, 1, 'Should track session')
     assert(mockTransport.createdAt, 'Should have creation timestamp')
   })
@@ -40,7 +40,7 @@ describe('Session Timeout Cleanup Test', () => {
     registry.activeTransports.clear()
     const timeoutMs = 30000 // 30 seconds
     const currentTime = Date.now()
-    
+
     registry.activeTransports.set('expired-session', {
       type: 'streamable',
       sessionId: 'expired-session',
@@ -64,7 +64,7 @@ describe('Session Timeout Cleanup Test', () => {
     registry.activeTransports.clear()
     const timeoutMs = 30000
     const currentTime = Date.now()
-    
+
     registry.activeTransports.set('cleanup-session', {
       type: 'streamable',
       sessionId: 'cleanup-session',
@@ -72,9 +72,9 @@ describe('Session Timeout Cleanup Test', () => {
       transport: { close: () => Promise.resolve() }
     })
     assert.equal(registry.activeTransports.size, 1, 'Should have session before cleanup')
-    
+
     const expiredSessions = registry.cleanupExpiredSessions(timeoutMs)
-    
+
     assert.equal(registry.activeTransports.size, 0, 'Should cleanup expired sessions')
     assert.deepEqual(expiredSessions, ['cleanup-session'], 'Should report cleaned sessions')
   })

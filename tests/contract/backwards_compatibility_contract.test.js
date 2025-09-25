@@ -10,7 +10,7 @@ describe('Backwards Compatibility Contract', () => {
     const config = createSdkServerConfig({ port: 3333 })
     const server = createSdkServer(config)
     registry = new SdkTransportRegistry(config, server)
-    
+
     assert(registry, 'Registry should be created')
   })
 
@@ -18,7 +18,7 @@ describe('Backwards Compatibility Contract', () => {
     assert.equal(registry.isLegacySseEndpoint('/mcp/events'), true, 'Should recognize legacy /mcp/events')
     assert.equal(registry.isLegacyMessageEndpoint('/mcp/messages'), true, 'Should recognize legacy /mcp/messages')
     assert.equal(registry.isMcpEndpoint('/mcp'), true, 'Should recognize modern /mcp')
-    
+
     console.log('Legacy endpoints backwards compatibility validated')
   })
 })

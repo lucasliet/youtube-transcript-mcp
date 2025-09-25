@@ -20,7 +20,7 @@ test('integration: returns segments from manual track in preferred language', as
               { kind: 'standard', languageCode: 'pt-BR', baseUrl: 'https://example/track_pt' },
               { kind: 'asr', languageCode: 'en', baseUrl: 'https://example/track_en_asr' }
             ],
-            audioTracks: [ { defaultCaptionTrackIndex: 0 } ]
+            audioTracks: [{ defaultCaptionTrackIndex: 0 }]
           }
         }
       })
@@ -43,4 +43,3 @@ test('integration: returns segments from manual track in preferred language', as
 function mkResponse(status, body, contentType = 'text/html') {
   return new globalThis.Response(body, { status, headers: { 'content-type': contentType } })
 }
-

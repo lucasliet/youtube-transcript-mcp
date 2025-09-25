@@ -23,7 +23,7 @@ test.skip('integration: remote transcript success - LEGACY TEST', async (t) => {
             captionTracks: [
               { baseUrl: 'https://example/pt', languageCode: 'pt-BR', kind: 'standard' }
             ],
-            audioTracks: [ { defaultCaptionTrackIndex: 0 } ]
+            audioTracks: [{ defaultCaptionTrackIndex: 0 }]
           }
         }
       }), 'application/json')

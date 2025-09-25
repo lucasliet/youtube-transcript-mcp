@@ -19,7 +19,7 @@ test('integration: when no preferredLanguages provided, uses default track', asy
                 { kind: 'asr', languageCode: 'en', baseUrl: 'https://example/track_en_asr' },
                 { kind: 'standard', languageCode: 'pt-BR', baseUrl: 'https://example/track_pt' }
               ],
-              audioTracks: [ { defaultCaptionTrackIndex: 1 } ]
+              audioTracks: [{ defaultCaptionTrackIndex: 1 }]
             }
           }
         })

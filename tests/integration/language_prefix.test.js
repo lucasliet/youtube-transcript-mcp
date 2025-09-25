@@ -18,7 +18,7 @@ test('integration: language prefix matches (pt -> pt-BR)', async () => {
               { kind: 'standard', languageCode: 'pt-BR', baseUrl: 'https://example/track_pt' },
               { kind: 'standard', languageCode: 'en', baseUrl: 'https://example/track_en' }
             ],
-            audioTracks: [ { defaultCaptionTrackIndex: 0 } ]
+            audioTracks: [{ defaultCaptionTrackIndex: 0 }]
           }
         }
       })
@@ -40,4 +40,3 @@ test('integration: language prefix matches (pt -> pt-BR)', async () => {
 function mkResponse(status, body, contentType = 'text/html') {
   return new globalThis.Response(body, { status, headers: { 'content-type': contentType } })
 }
-

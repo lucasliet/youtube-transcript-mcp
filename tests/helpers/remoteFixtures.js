@@ -27,22 +27,23 @@ export async function openEventStream(server, headers = {}) {
   let finish
   const finished = new Promise((resolve) => {
     finish = resolve
-  })
-  ;(async () => {
+  })(async () => {
     try {
       for await (const chunk of stream) {
         buffer += decoder.decode(chunk, { stream: true })
-        let boundary
-        while ((boundary = buffer.indexOf('\n\n')) !== -1) {
+        let boundary = buffer.indexOf('\n\n')
+        while (boundary !== -1) {
           const raw = buffer.slice(0, boundary)
           buffer = buffer.slice(boundary + 2)
-          if (!raw.trim()) continue
-          const evt = parseEvent(raw)
-          if (waiters.length) {
-            waiters.shift().resolve(evt)
-          } else {
-            events.push(evt)
+          if (raw.trim()) {
+            const evt = parseEvent(raw)
+            if (waiters.length) {
+              waiters.shift().resolve(evt)
+            } else {
+              events.push(evt)
+            }
           }
+          boundary = buffer.indexOf('\n\n')
         }
       }
     } catch (err) {

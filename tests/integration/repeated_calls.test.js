@@ -16,8 +16,8 @@ test('integration: repeated calls perform fresh fetches (no cache)', async () =>
         playabilityStatus: { status: 'OK' },
         captions: {
           playerCaptionsTracklistRenderer: {
-            captionTracks: [ { kind: 'standard', languageCode: 'en', baseUrl: 'https://example/track_en' } ],
-            audioTracks: [ { defaultCaptionTrackIndex: 0 } ]
+            captionTracks: [{ kind: 'standard', languageCode: 'en', baseUrl: 'https://example/track_en' }],
+            audioTracks: [{ defaultCaptionTrackIndex: 0 }]
           }
         }
       })
@@ -41,4 +41,3 @@ test('integration: repeated calls perform fresh fetches (no cache)', async () =>
 function mkResponse(status, body, contentType = 'text/html') {
   return new globalThis.Response(body, { status, headers: { 'content-type': contentType } })
 }
-

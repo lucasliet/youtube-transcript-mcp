@@ -4,6 +4,7 @@ import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../../package.json')
+
 const PROTOCOL_VERSION = '2025-06-18'
 
 describe('SDK Initialize Contract', () => {

@@ -10,7 +10,7 @@ describe('Missing Headers Error Scenario', () => {
     const config = createSdkServerConfig({ port: 3333 })
     const server = createSdkServer(config)
     registry = new SdkTransportRegistry(config, server)
-    
+
     assert(registry, 'Registry should be created')
   })
 
@@ -19,7 +19,7 @@ describe('Missing Headers Error Scenario', () => {
       headers: {},
       url: '/mcp'
     }
-    
+
     const sessionId = registry.extractSessionId(reqWithoutHeaders)
     assert.equal(sessionId, undefined, 'Should return undefined for missing session ID')
   })
@@ -28,7 +28,7 @@ describe('Missing Headers Error Scenario', () => {
     const reqWithoutHeaders = {
       url: '/mcp'
     }
-    
+
     const sessionId = registry.extractSessionId(reqWithoutHeaders)
     assert.equal(sessionId, undefined, 'Should handle missing headers object')
   })
@@ -38,7 +38,7 @@ describe('Missing Headers Error Scenario', () => {
       headers: { 'content-type': 'application/json' },
       url: '/mcp?other=param'
     }
-    
+
     const sessionId = registry.extractSessionId(reqWithEmptyHeaders)
     assert.equal(sessionId, undefined, 'Should return undefined when session ID header is missing')
   })
@@ -48,7 +48,7 @@ describe('Missing Headers Error Scenario', () => {
       headers: { 'x-session-id': 'header-session' },
       url: '/mcp?sessionId=query-session'
     }
-    
+
     const sessionId = registry.extractSessionId(reqWithBoth)
     assert.equal(sessionId, 'header-session', 'Should prioritize header over query parameter')
   })

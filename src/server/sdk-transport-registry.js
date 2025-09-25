@@ -3,47 +3,30 @@ import http from 'node:http'
 import { once } from 'node:events'
 import { randomUUID } from 'node:crypto'
 import { logSdkError, logSdkTransport, SDK_ERROR_CATEGORIES } from '../lib/log.js'
-
-const STREAMABLE_MODULE_PATHS = [
-  '@modelcontextprotocol/sdk/server/streamableHttp.js',
-  '@modelcontextprotocol/sdk/server/streamable-http.js',
-  '@modelcontextprotocol/sdk/dist/server/streamableHttp.js',
-  '@modelcontextprotocol/sdk/dist/server/streamable-http.js'
-]
+import { loadStreamableTransport } from './loadStreamableTransport.js'
 
 const SUPPORTED_PROTOCOL_VERSION = '2025-06-18'
 
-let streamableTransportPromise
-
-async function loadStreamableHTTPServerTransport() {
-  if (streamableTransportPromise === undefined) {
-    streamableTransportPromise = (async () => {
-      for (const specifier of STREAMABLE_MODULE_PATHS) {
-        try {
-          const module = await import(specifier)
-          if (module && module.StreamableHTTPServerTransport) {
-            return module.StreamableHTTPServerTransport
-          }
-        } catch (error) {
-          const message = typeof error === 'object' && error !== null ? String(error.message || error) : String(error)
-          if (error?.code !== 'ERR_MODULE_NOT_FOUND' && !message.includes('Cannot find module')) {
-            throw error
-          }
-        }
-      }
-      return null
-    })()
-  }
-  return streamableTransportPromise
-}
-
+/**
+ * Checks whether a request body corresponds to an MCP initialize message.
+ * @param body Parsed JSON request payload.
+ * @returns True when the body represents an initialize call.
+ */
 function isInitializeRequestBody(body) {
   if (!body || typeof body !== 'object') return false
   if (body.method !== 'initialize') return false
   return true
 }
 
+/**
+ * Coordinates MCP transports for the remote server, handling SSE, streamable HTTP, and legacy endpoints.
+ */
 export class SdkTransportRegistry {
+  /**
+   * Creates a registry instance.
+   * @param config Remote server configuration object.
+   * @param server MCP server instance to connect transports to.
+   */
   constructor(config, server) {
     this.config = config
     this.server = server
@@ -52,6 +35,10 @@ export class SdkTransportRegistry {
     this.heartbeatTimers = new Map()
   }
 
+  /**
+   * Boots the HTTP server and prepares MCP transport endpoints.
+   * @returns Resolves with base URL and the actual listening port.
+   */
   async start() {
     this.httpServer = http.createServer(async (req, res) => {
       try {
@@ -122,6 +109,10 @@ export class SdkTransportRegistry {
     return { baseUrl, port: actualPort }
   }
 
+  /**
+   * Applies CORS headers based on registry configuration.
+   * @param res HTTP response being prepared for the client.
+   */
   setupCorsHeaders(res) {
     if (this.config.cors) {
       const origin = this.config.cors === true ? '*' : this.config.cors
@@ -129,16 +120,20 @@ export class SdkTransportRegistry {
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, Mcp-Session-Id, X-Session-Id, MCP-Protocol-Version')
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
       res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id')
-      
+
       if (origin !== '*' && !this.isAllowedOrigin(origin)) {
         console.warn('CORS: Origin ' + origin + ' not in allowed list')
       }
     }
   }
 
+  /**
+   * Determines whether the supplied origin is permitted to establish connections.
+   * @param origin Origin header value from the request.
+   * @returns True when origin is allowed to connect.
+   */
   isAllowedOrigin(origin) {
     if (!origin) return false
-    // Allow localhost origins for development
     if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
       return true
     }
@@ -151,18 +146,33 @@ export class SdkTransportRegistry {
     return process.env.NODE_ENV === 'development'
   }
 
+  /**
+   * Checks whether the URL targets the consolidated MCP endpoint.
+   * @param url Request URL string.
+   * @returns True when the URL corresponds to /mcp.
+   */
   isMcpEndpoint(url) {
     if (!url) return false
     const [pathname] = url.split('?')
     return pathname === '/mcp'
   }
 
+  /**
+   * Checks whether the URL targets the deprecated SSE endpoint.
+   * @param url Request URL string.
+   * @returns True when the URL corresponds to /mcp/events.
+   */
   isLegacySseEndpoint(url) {
     if (!url) return false
     const [pathname] = url.split('?')
     return pathname === '/mcp/events'
   }
 
+  /**
+   * Checks whether the URL targets the deprecated message endpoint.
+   * @param url Request URL string.
+   * @returns True when the URL corresponds to /mcp/messages.
+   */
   isLegacyMessageEndpoint(url) {
     if (!url) return false
     const [pathname] = url.split('?')
@@ -217,6 +227,12 @@ export class SdkTransportRegistry {
     return false
   }
 
+  /**
+   * Handles SSE connection establishment for consolidated MCP endpoint.
+   * @param req Incoming HTTP request.
+   * @param res HTTP response used to stream SSE events.
+   * @returns Promise that settles when setup completes or fails.
+   */
   async handleSseConnection(req, res) {
     try {
       if (!this.validateProtocolVersion(req, res)) {
@@ -270,15 +286,20 @@ export class SdkTransportRegistry {
         this.activeTransports.delete(sessionId)
       })
     } catch (err) {
-      logSdkError(SDK_ERROR_CATEGORIES.SSE_CONNECTION, "SSE connection failed: " + err.message, undefined, {
+      logSdkError(SDK_ERROR_CATEGORIES.SSE_CONNECTION, 'SSE connection failed: ' + err.message, undefined, {
         endpoint: '/mcp',
         error: err.message
       })
-      // Don't try to send error response here - transport may have already started
       throw err
     }
   }
 
+  /**
+   * Processes JSON-RPC POST requests for the MCP endpoint.
+   * @param req Incoming HTTP request with optional session headers.
+   * @param res HTTP response used to return JSON results.
+   * @returns Promise that resolves once the request lifecycle completes.
+   */
   async handleMcpPost(req, res) {
     if (!this.validateProtocolVersion(req, res)) {
       return
@@ -347,8 +368,15 @@ export class SdkTransportRegistry {
     await this.createStreamableSession(req, res, body)
   }
 
+  /**
+   * Creates a streamable HTTP session for the MCP transport registry.
+   * @param req Incoming HTTP request used to bootstrap the session.
+   * @param res HTTP response for initial session negotiation.
+   * @param body Parsed initialize request body.
+   * @returns Promise resolving once the transport has processed the request.
+   */
   async createStreamableSession(req, res, body) {
-    const StreamableHTTPServerTransport = await loadStreamableHTTPServerTransport()
+    const StreamableHTTPServerTransport = await loadStreamableTransport()
     if (!StreamableHTTPServerTransport) {
       res.writeHead(501, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({
@@ -408,23 +436,31 @@ export class SdkTransportRegistry {
     }
   }
 
+  /**
+   * Handles GET requests for established streamable sessions.
+   * @param sessionId Identifier of the streamable session.
+   * @param req Incoming HTTP request.
+   * @param res HTTP response used to stream data to the client.
+   * @returns Promise resolved after the transport processes the request.
+   */
   async handleStreamableGet(sessionId, req, res) {
     if (!this.validateProtocolVersion(req, res)) {
       return
     }
-    const tracked = this.activeTransports.get(sessionId)
-    if (!tracked || tracked.type !== 'streamable') {
-      this.sendError(res, 404, 'Session not found')
+    const tracked = this.getStreamableSession(sessionId, res)
+    if (!tracked) {
       return
     }
 
-    try {
-      await tracked.transport.handleRequest(req, res)
-    } finally {
-      tracked.lastActivity = Date.now()
-    }
+    await this.runStreamableRequest(tracked, () => tracked.transport.handleRequest(req, res))
   }
 
+  /**
+   * Handles DELETE requests to gracefully terminate streamable sessions.
+   * @param req Incoming HTTP request.
+   * @param res HTTP response used to acknowledge termination.
+   * @returns Promise resolved after the transport completes handling.
+   */
   async handleStreamableDelete(req, res) {
     if (!this.validateProtocolVersion(req, res)) {
       return
@@ -435,23 +471,56 @@ export class SdkTransportRegistry {
       return
     }
 
-    const tracked = this.activeTransports.get(sessionId)
-    if (!tracked || tracked.type !== 'streamable') {
-      this.sendError(res, 404, 'Session not found')
+    const tracked = this.getStreamableSession(sessionId, res)
+    if (!tracked) {
       return
     }
 
+    await this.runStreamableRequest(tracked, () => tracked.transport.handleRequest(req, res))
+  }
+
+  /**
+   * Retrieves the tracked streamable transport for the given session ID.
+   * @param sessionId The session identifier to search for.
+   * @param res The response instance used to emit errors when not found.
+   * @returns The tracked streamable transport or null when unavailable.
+   */
+  getStreamableSession(sessionId, res) {
+    const tracked = this.activeTransports.get(sessionId)
+    if (!tracked || tracked.type !== 'streamable') {
+      this.sendError(res, 404, 'Session not found')
+      return null
+    }
+    return tracked
+  }
+
+  /**
+   * Executes a streamable transport request while keeping activity timestamps updated.
+   * @param tracked The tracked streamable transport entry.
+   * @param handler Callback invoking the transport handler.
+   * @returns Promise resolved when the handler finishes execution.
+   */
+  async runStreamableRequest(tracked, handler) {
     try {
-      await tracked.transport.handleRequest(req, res)
+      await handler()
     } finally {
       tracked.lastActivity = Date.now()
     }
   }
 
+  /**
+   * Indicates whether the registry has reached the configured client limit.
+   * @returns True when no additional clients can connect.
+   */
   isAtCapacity() {
     return this.activeTransports.size >= this.config.maxClients
   }
 
+  /**
+   * Reads and parses a JSON body from the incoming request.
+   * @param req Incoming HTTP request stream.
+   * @returns Parsed JSON object or undefined when parsing fails.
+   */
   async readJsonBody(req) {
     const chunks = []
     for await (const chunk of req) {
@@ -475,6 +544,11 @@ export class SdkTransportRegistry {
     }
   }
 
+  /**
+   * Extracts the session identifier from headers or query parameters.
+   * @param req Incoming HTTP request.
+   * @returns Session identifier string or undefined when absent.
+   */
   extractSessionId(req) {
     if (!req) return undefined
     const headerId = req.headers?.['mcp-session-id'] || req.headers?.['x-session-id'] || req.headers?.['X-Session-Id']
@@ -486,6 +560,12 @@ export class SdkTransportRegistry {
     return searchParams.get('sessionId') || undefined
   }
 
+  /**
+   * Sends a JSON error response with the specified status code.
+   * @param res HTTP response object.
+   * @param statusCode Numeric HTTP status code.
+   * @param message Error message to include in the payload.
+   */
   sendError(res, statusCode, message) {
     res.writeHead(statusCode, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({ code: statusCode, message }))
@@ -514,11 +594,14 @@ export class SdkTransportRegistry {
     }))
   }
 
+  /**
+   * Gracefully shuts down transports and closes the underlying HTTP server.
+   * @returns Promise resolved once all resources are released.
+   */
   async close() {
     for (const sessionId of this.activeTransports.keys()) {
       this.stopHeartbeat(sessionId)
     }
-    // Close all active transports
     for (const tracked of this.activeTransports.values()) {
       try {
         await tracked.transport.close?.()
@@ -528,7 +611,6 @@ export class SdkTransportRegistry {
     }
     this.activeTransports.clear()
 
-    // Close HTTP server
     if (this.httpServer) {
       await new Promise((resolve, reject) => {
         this.httpServer.close((err) => {
@@ -539,6 +621,10 @@ export class SdkTransportRegistry {
     }
   }
 
+  /**
+   * Begins heartbeat emission for an active SSE session.
+   * @param tracked Tracked transport entry representing the session.
+   */
   startHeartbeat(tracked) {
     const interval = this.config.heartbeatIntervalMs
     const timeout = this.config.requestTimeoutMs
@@ -574,6 +660,10 @@ export class SdkTransportRegistry {
     this.heartbeatTimers.set(sessionId, timer)
   }
 
+  /**
+   * Stops heartbeat timers associated with the specified session.
+   * @param sessionId Identifier of the session to stop.
+   */
   stopHeartbeat(sessionId) {
     const timer = this.heartbeatTimers.get(sessionId)
     if (timer) {
@@ -582,6 +672,11 @@ export class SdkTransportRegistry {
     }
   }
 
+  /**
+   * Removes sessions that have exceeded the configured timeout.
+   * @param timeoutMs Timeout window used to determine expiration.
+   * @returns Array of session IDs that were cleaned up.
+   */
   cleanupExpiredSessions(timeoutMs = this.config.requestTimeoutMs) {
     const expired = []
     const now = Date.now()
