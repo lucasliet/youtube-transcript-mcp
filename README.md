@@ -10,6 +10,7 @@ Ferramenta MCP para obter transcrições de vídeos do YouTube com timestamps e 
 - [Instalação como biblioteca](#instalação-como-biblioteca-npm-via-github)
 - [Compatível com OpenAI SDK (Chat Completions Tools)](#compatível-com-openai-sdk-chat-completions-tools)
 - [Configuração como MCP Server](#configuração-como-mcp-server)
+- [Deploy no Deno Deploy (MCP Remoto)](#deploy-no-deno-deploy-mcp-remoto)
 - [Formato de entrada e saída](#formato-de-entrade-e-saída)
 - [Regras de Seleção de Legenda](#regras-de-seleção-de-legenda)
 - [Comportamento de Erro](#comportamento-de-erro)
@@ -108,19 +109,20 @@ Formato de retorno (MCP):
 - O handler `tools/call` retorna `content` com `type: "text"` contendo o JSON serializado do array de segmentos.
 
 ### Executando como servidor remoto (SSE)
-O binário expõe um endpoint `/mcp` para acesso remoto via MCP com Server-Sent Events (SSE).
 
-### Executando como servidor remoto (SSE)
-
-Para iniciar o servidor remoto, use:
+Para iniciar o servidor remoto (Node.js ou Deno 2 localmente), use:
 
 ```bash
-npm run start:remote --host 0.0.0.0 --port 3000 --cors "*"
+npm run start:remote --host 0.0.0.0 --port 3000 --cors "*"   # Node.js
+# ou com Deno 2 (também funciona, pois node:http é compatível):
+deno run --allow-net --allow-env --allow-read src/cli.js --mode remote --port 3000 --cors "*"
 ```
 
+> **Nota:** O Deno 2 é compatível com `node:http` e consegue rodar o `start:remote` normalmente em ambiente local. O entrypoint `src/deno-deploy.js` só é necessário para o **Deno Deploy** (serverless/isolates), onde não existe processo persistente e `node:http .listen()` não funciona — apenas `Deno.serve()` é suportado.
+
 Endpoints expostos:
-- `GET /mcp`: abre o stream SSE, envia evento `ready` com `sessionId` e heartbeats.
-- `POST /mcp`: recebe frames JSON-RPC (`initialize`, `tools/list`, `tools/call`, `shutdown`) identificados pelo cabeçalho `Mcp-Session-Id`.
+- `GET /mcp`: abre o stream SSE, envia evento `endpoint` com `sessionId` e heartbeats.
+- `POST /mcp?sessionId=<id>`: recebe frames JSON-RPC (`initialize`, `tools/list`, `tools/call`, `shutdown`) identificados pelo query param ou cabeçalho `Mcp-Session-Id`.
 
 Recursos chave:
 - Handshake MCP (`initialize`/`shutdown`) tratado automaticamente pelo SDK.
@@ -129,12 +131,71 @@ Recursos chave:
 - Conexões liveness: heartbeats periódicos e limpeza de sessões expiradas.
 
 Flags úteis:
-- `--host`: Host/IP para bind do servidor (padrão: configurable via `src/server/config.js`)
-- `--port`: Porta do servidor (padrão: configurable via `src/server/config.js`)
+- `--host`: Host/IP para bind do servidor (padrão: `0.0.0.0`)
+- `--port`: Porta do servidor (padrão: `3000`)
 - `--cors`: Configuração CORS (`false`, `*` ou origem específica)
-- `--heartbeat-interval`: Intervalo de heartbeat em ms (padrão: 25000)
-- `--request-timeout`: Timeout de request em ms (padrão: 60000, deve ser > heartbeat)
-- `--max-clients`: Máximo de clientes simultâneos (padrão: 10)
+- `--heartbeat-interval`: Intervalo de heartbeat em ms (padrão: `25000`)
+- `--request-timeout`: Timeout de request em ms (padrão: `60000`, deve ser > heartbeat)
+- `--max-clients`: Máximo de clientes simultâneos (padrão: `10`)
+
+## Deploy no Deno Deploy (MCP Remoto)
+
+Um servidor remoto já está disponível publicamente em:
+
+**`https://youtube-transcript-mcp.deno.dev`**
+
+### Usar o servidor público
+
+Configure diretamente no seu host MCP (Claude Desktop, Cursor, VS Code, etc.):
+
+```json
+{
+  "mcpServers": {
+    "youtube-transcript-remote": {
+      "url": "https://youtube-transcript-mcp.deno.dev/mcp"
+    }
+  }
+}
+```
+
+### Por que um entrypoint separado para Deno Deploy?
+
+O Deno Deploy é serverless (isolates): não existe processo persistente, então `node:http .listen()` não funciona. O `src/deno-deploy.js` implementa o protocolo MCP/SSE usando exclusivamente a Web Fetch API (`Deno.serve`, `Request`, `Response`, `ReadableStream`), que é o único modelo suportado.
+
+Em ambiente local, o Deno 2 é compatível com `node:http` e o `start:remote` funciona normalmente — o entrypoint dedicado só é necessário para o Deno Deploy.
+
+### Fazer seu próprio deploy
+
+```bash
+# 1. Instalar deployctl
+deno install -gArf jsr:@deno/deployctl
+
+# 2. Autenticar (abre browser)
+deployctl login
+
+# 3. Deploy
+deployctl deploy --project=<nome-do-projeto> src/deno-deploy.js
+```
+
+### Testar localmente antes do deploy
+
+```bash
+deno task start   # porta 8000
+
+curl -N http://localhost:8000/mcp
+# event: endpoint
+# data: "/mcp?sessionId=<uuid>"
+```
+
+### Protocolo SSE exposto
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `GET` | `/mcp` | Abre stream SSE, envia `event: endpoint` com o `sessionId` |
+| `POST` | `/mcp?sessionId=<id>` | Recebe mensagem JSON-RPC, retorna HTTP 202, envia resposta pelo SSE |
+| `OPTIONS` | `*` | CORS preflight (permite `*`) |
+
+Métodos MCP suportados: `initialize`, `ping`, `tools/list`, `tools/call`.
 
 ## Formato de entrade e saída
 Entrada:
@@ -174,13 +235,15 @@ Retorna `null` em qualquer falha. Logs internos categorizam causa.
 - Sem persistência em disco
 
 ## Desenvolvimento
-- Node 18+
+- Node 18+ / Deno 2+
 - JavaScript ESM
 
 Scripts:
 ```bash
-npm test
-npm run lint
+npm test           # testes Node
+npm run lint       # ESLint
+npm run start:deno # servidor Deno local (porta 8000)
+npm run dev:deno   # servidor Deno com watch
 ```
 
 ## Testes Esperados

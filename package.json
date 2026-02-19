@@ -13,6 +13,8 @@
     "lint": "eslint . --max-warnings=0",
     "start:stdio": "node src/cli.js",
     "start:remote": "node src/cli.js --mode remote --port 3333 --cors *",
+    "start:deno": "deno task start",
+    "dev:deno": "deno task dev",
     "dev:stdio": "node --watch src/cli.js",
     "dev:remote": "node --watch src/cli.js --mode remote --port 3333 --cors *",
     "jscpd": "jscpd src --reporters console --threshold 0.1",

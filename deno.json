@@ -1,0 +1,15 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "start": "deno run --allow-net --allow-env --allow-read src/deno-deploy.js",
+    "dev": "deno run --watch --allow-net --allow-env --allow-read src/deno-deploy.js"
+  },
+  "deploy": {
+    "project": "9018700a-ae73-44e3-9e86-8a958d957ecb",
+    "exclude": [
+      "**/node_modules"
+    ],
+    "include": [],
+    "entrypoint": "src/deno-deploy.js"
+  }
+}
