@@ -11,6 +11,9 @@ const CORS_HEADERS = {
   'Access-Control-Expose-Headers': 'Mcp-Session-Id'
 }
 
+const FAVICON_DATA = await Deno.readFile(new URL('../static/favicon.ico', import.meta.url))
+const ROBOTS_DATA = await Deno.readTextFile(new URL('../static/robots.txt', import.meta.url))
+
 const server = new McpServer(
   { name: SERVER_NAME, version: SERVER_VERSION },
   { capabilities: { tools: {} } }
@@ -107,6 +110,18 @@ async function handler(req) {
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
+  }
+
+  if (url.pathname === '/favicon.ico') {
+    return new Response(FAVICON_DATA, {
+      headers: { 'Content-Type': 'image/x-icon', 'Cache-Control': 'public, max-age=86400' }
+    })
+  }
+
+  if (url.pathname === '/robots.txt') {
+    return new Response(ROBOTS_DATA, {
+      headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=3600' }
+    })
   }
 
   if (url.pathname === '/mcp') {
