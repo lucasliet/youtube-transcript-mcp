@@ -85,7 +85,7 @@ async function handleMcpPost(req) {
 
   if (Array.isArray(body)) {
     const results = await Promise.all(body.map(dispatchJsonRpc))
-    const responses = results.filter(r => r !== null)
+    const responses = results.filter((r) => r !== null)
     if (responses.length === 0) {
       return new Response(null, { status: 202, headers: { 'Mcp-Session-Id': sessionId, ...CORS_HEADERS } })
     }
