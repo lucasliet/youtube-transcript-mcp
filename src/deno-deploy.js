@@ -3,7 +3,7 @@ import { registerTranscriptTool } from './server/register-transcript-tool.js'
 
 const SERVER_NAME = 'youtube-transcript-mcp'
 const SERVER_VERSION = '2.0.3'
-const HEARTBEAT_INTERVAL_MS = 25_000
+const PROTOCOL_VERSION = '2025-03-26'
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type, Accept, Mcp-Session-Id',
@@ -17,64 +17,25 @@ const server = new McpServer(
 )
 registerTranscriptTool(server)
 
-/** @type {Map<string, { controller: ReadableStreamDefaultController, heartbeatTimer: ReturnType<typeof setInterval> }>} */
-const sessions = new Map()
-
 /**
- * Encodes an SSE event into the wire format.
- * @param {string} event Event name.
- * @param {unknown} data Data to serialize as JSON.
- * @returns {Uint8Array} Encoded bytes.
+ * Dispatches a single JSON-RPC message and returns the response object.
+ * Returns null for notifications (no response required).
+ * @param {object} body Parsed JSON-RPC request.
+ * @returns {Promise<object|null>} JSON-RPC response or null.
  */
-function encodeEvent(event, data) {
-  return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
-}
-
-/**
- * Sends an SSE event to a session's stream controller.
- * @param {string} sessionId Target session identifier.
- * @param {string} event Event name.
- * @param {unknown} data Event payload.
- */
-function sendEvent(sessionId, event, data) {
-  const session = sessions.get(sessionId)
-  if (!session) return
-  try {
-    session.controller.enqueue(encodeEvent(event, data))
-  } catch {
-    cleanupSession(sessionId)
-  }
-}
-
-/**
- * Clears heartbeat timer and removes the session from the registry.
- * @param {string} sessionId Session to remove.
- */
-function cleanupSession(sessionId) {
-  const session = sessions.get(sessionId)
-  if (!session) return
-  clearInterval(session.heartbeatTimer)
-  sessions.delete(sessionId)
-}
-
-/**
- * Dispatches a JSON-RPC message to the MCP server and sends the response via SSE.
- * @param {string} sessionId Session receiving the response.
- * @param {object} body Parsed JSON-RPC request body.
- */
-async function dispatchJsonRpc(sessionId, body) {
+async function dispatchJsonRpc(body) {
   const { id, method, params } = body
 
-  try {
-    if (method === 'notifications/initialized' || method?.startsWith('notifications/')) {
-      return
-    }
+  if (method?.startsWith('notifications/') || id === undefined) {
+    return null
+  }
 
+  try {
     let result
 
     if (method === 'initialize') {
       result = {
-        protocolVersion: '2024-11-05',
+        protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: {} },
         serverInfo: { name: SERVER_NAME, version: SERVER_VERSION }
       }
@@ -85,77 +46,23 @@ async function dispatchJsonRpc(sessionId, body) {
     } else if (method === 'tools/call') {
       result = await server.callTool({ params })
     } else {
-      sendEvent(sessionId, 'message', {
-        jsonrpc: '2.0',
-        id,
-        error: { code: -32601, message: 'Method not found' }
-      })
-      return
+      return { jsonrpc: '2.0', id, error: { code: -32601, message: 'Method not found' } }
     }
 
-    sendEvent(sessionId, 'message', { jsonrpc: '2.0', id, result })
+    return { jsonrpc: '2.0', id, result }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    sendEvent(sessionId, 'message', {
-      jsonrpc: '2.0',
-      id,
-      error: { code: -32000, message }
-    })
+    return { jsonrpc: '2.0', id, error: { code: -32000, message } }
   }
 }
 
 /**
- * Handles GET /mcp — opens an SSE session stream.
- * @returns {Response} SSE streaming response.
- */
-function handleSseConnect() {
-  const sessionId = crypto.randomUUID()
-
-  const stream = new ReadableStream({
-    start(controller) {
-      const heartbeatTimer = setInterval(() => {
-        try {
-          controller.enqueue(encodeEvent('heartbeat', { sessionId, timestamp: Date.now() }))
-        } catch {
-          cleanupSession(sessionId)
-        }
-      }, HEARTBEAT_INTERVAL_MS)
-
-      sessions.set(sessionId, { controller, heartbeatTimer })
-      controller.enqueue(encodeEvent('endpoint', `/mcp?sessionId=${sessionId}`))
-    },
-    cancel() {
-      cleanupSession(sessionId)
-    }
-  })
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Mcp-Session-Id': sessionId,
-      ...CORS_HEADERS
-    }
-  })
-}
-
-/**
- * Handles POST /mcp — receives a JSON-RPC message for an existing SSE session.
+ * Handles POST /mcp — Streamable HTTP transport (MCP spec 2025-03-26).
+ * Accepts JSON-RPC requests and returns inline JSON responses.
  * @param {Request} req Incoming request.
- * @param {URL} url Parsed request URL.
- * @returns {Promise<Response>} 202 on success, 400/404 on error.
+ * @returns {Promise<Response>} JSON response with MCP result.
  */
-async function handleMcpPost(req, url) {
-  const sessionId = url.searchParams.get('sessionId') ?? req.headers.get('mcp-session-id') ?? ''
-
-  if (!sessions.has(sessionId)) {
-    return new Response(JSON.stringify({ error: 'Session not found' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
-    })
-  }
-
+async function handleMcpPost(req) {
   let body
   try {
     body = await req.json()
@@ -166,9 +73,28 @@ async function handleMcpPost(req, url) {
     })
   }
 
-  dispatchJsonRpc(sessionId, body).catch(() => {})
+  const sessionId = req.headers.get('mcp-session-id') ?? crypto.randomUUID()
+  const responseHeaders = {
+    'Content-Type': 'application/json',
+    'Mcp-Session-Id': sessionId,
+    ...CORS_HEADERS
+  }
 
-  return new Response(null, { status: 202, headers: CORS_HEADERS })
+  if (Array.isArray(body)) {
+    const results = await Promise.all(body.map(dispatchJsonRpc))
+    const responses = results.filter(r => r !== null)
+    if (responses.length === 0) {
+      return new Response(null, { status: 202, headers: { 'Mcp-Session-Id': sessionId, ...CORS_HEADERS } })
+    }
+    return new Response(JSON.stringify(responses), { headers: responseHeaders })
+  }
+
+  const result = await dispatchJsonRpc(body)
+  if (result === null) {
+    return new Response(null, { status: 202, headers: { 'Mcp-Session-Id': sessionId, ...CORS_HEADERS } })
+  }
+
+  return new Response(JSON.stringify(result), { headers: responseHeaders })
 }
 
 /**
@@ -184,8 +110,7 @@ async function handler(req) {
   }
 
   if (url.pathname === '/mcp') {
-    if (req.method === 'GET') return handleSseConnect()
-    if (req.method === 'POST') return handleMcpPost(req, url)
+    if (req.method === 'POST') return handleMcpPost(req)
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
