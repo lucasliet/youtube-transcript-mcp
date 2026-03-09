@@ -6,7 +6,7 @@ const SERVER_VERSION = '2.0.3'
 const PROTOCOL_VERSION = '2025-03-26'
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Accept, Mcp-Session-Id',
+  'Access-Control-Allow-Headers': 'Content-Type, Accept, Mcp-Session-Id, mcp-protocol-version',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Expose-Headers': 'Mcp-Session-Id'
 }
