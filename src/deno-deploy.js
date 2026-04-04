@@ -1,15 +1,11 @@
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 import { McpServer } from './server/mcp-server.js'
 import { registerTranscriptTool } from './server/register-transcript-tool.js'
 
 const SERVER_NAME = 'youtube-transcript-mcp'
 const SERVER_VERSION = '2.0.3'
 const PROTOCOL_VERSION = '2025-03-26'
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Accept, Mcp-Session-Id, mcp-protocol-version',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Expose-Headers': 'Mcp-Session-Id'
-}
 
 const FAVICON_DATA = await Deno.readFile(new URL('../static/favicon.ico', import.meta.url))
 const ROBOTS_DATA = await Deno.readTextFile(new URL('../static/robots.txt', import.meta.url))
@@ -59,83 +55,62 @@ async function dispatchJsonRpc(body) {
   }
 }
 
-/**
- * Handles POST /mcp — Streamable HTTP transport (MCP spec 2025-03-26).
- * Accepts JSON-RPC requests and returns inline JSON responses.
- * @param {Request} req Incoming request.
- * @returns {Promise<Response>} JSON response with MCP result.
- */
-async function handleMcpPost(req) {
+const app = new Hono()
+
+app.use('*', cors({
+  origin: '*',
+  allowHeaders: ['Content-Type', 'Accept', 'Mcp-Session-Id', 'mcp-protocol-version'],
+  allowMethods: ['GET', 'POST', 'OPTIONS'],
+  exposeHeaders: ['Mcp-Session-Id']
+}))
+
+app.get('/favicon.ico', (c) => {
+  return c.body(FAVICON_DATA, 200, {
+    'Content-Type': 'image/x-icon',
+    'Cache-Control': 'public, max-age=86400'
+  })
+})
+
+app.get('/robots.txt', (c) => {
+  return c.text(ROBOTS_DATA, 200, {
+    'Cache-Control': 'public, max-age=3600'
+  })
+})
+
+app.post('/mcp', async (c) => {
   let body
   try {
-    body = await req.json()
+    body = await c.req.json()
   } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
-    })
+    return c.json({ error: 'Invalid JSON body' }, 400)
   }
 
-  const sessionId = req.headers.get('mcp-session-id') ?? crypto.randomUUID()
-  const responseHeaders = {
-    'Content-Type': 'application/json',
-    'Mcp-Session-Id': sessionId,
-    ...CORS_HEADERS
-  }
+  const sessionId = c.req.header('mcp-session-id') ?? crypto.randomUUID()
+  const sessionHeaders = { 'Mcp-Session-Id': sessionId }
 
   if (Array.isArray(body)) {
     const results = await Promise.all(body.map(dispatchJsonRpc))
     const responses = results.filter((r) => r !== null)
     if (responses.length === 0) {
-      return new Response(null, { status: 202, headers: { 'Mcp-Session-Id': sessionId, ...CORS_HEADERS } })
+      return c.body(null, 202, sessionHeaders)
     }
-    return new Response(JSON.stringify(responses), { headers: responseHeaders })
+    return c.json(responses, 200, sessionHeaders)
   }
 
   const result = await dispatchJsonRpc(body)
   if (result === null) {
-    return new Response(null, { status: 202, headers: { 'Mcp-Session-Id': sessionId, ...CORS_HEADERS } })
+    return c.body(null, 202, sessionHeaders)
   }
 
-  return new Response(JSON.stringify(result), { headers: responseHeaders })
-}
+  return c.json(result, 200, sessionHeaders)
+})
 
-/**
- * Main request handler for Deno.serve.
- * @param {Request} req Incoming HTTP request.
- * @returns {Promise<Response>} HTTP response.
- */
-async function handler(req) {
-  const url = new URL(req.url)
+app.get('/mcp', (c) => {
+  return c.json({ error: 'Method Not Allowed' }, 405)
+})
 
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: CORS_HEADERS })
-  }
+app.notFound((c) => {
+  return c.json({ error: 'Not Found' }, 404)
+})
 
-  if (url.pathname === '/favicon.ico') {
-    return new Response(FAVICON_DATA, {
-      headers: { 'Content-Type': 'image/x-icon', 'Cache-Control': 'public, max-age=86400' }
-    })
-  }
-
-  if (url.pathname === '/robots.txt') {
-    return new Response(ROBOTS_DATA, {
-      headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=3600' }
-    })
-  }
-
-  if (url.pathname === '/mcp') {
-    if (req.method === 'POST') return handleMcpPost(req)
-    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
-    })
-  }
-
-  return new Response(JSON.stringify({ error: 'Not Found' }), {
-    status: 404,
-    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
-  })
-}
-
-Deno.serve(handler)
+Deno.serve(app.fetch)
