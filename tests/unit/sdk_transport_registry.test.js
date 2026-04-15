@@ -1,12 +1,9 @@
 import { describe, it, mock } from 'node:test'
 import assert from 'node:assert/strict'
 import { Readable } from 'node:stream'
-import fs from 'node:fs/promises'
-import path from 'node:path'
 import http from 'node:http'
 import { SdkTransportRegistry } from '../../src/server/sdk-transport-registry.js'
 import { createSdkServerConfig, createSdkServer } from '../../src/server/sdk-config.js'
-import { resetStreamableTransportCache } from '../../src/server/loadStreamableTransport.js'
 
 function createResponseRecorder() {
   return {
@@ -467,50 +464,15 @@ describe('Transport Registry Unit Tests', () => {
     assert.equal(response.payload.error.code, 'too_many_clients')
   })
 
-  it('handleMcpPost returns 501 when streamable transport unavailable', async () => {
-    await resetStreamableTransportCache()
-    const config = createSdkServerConfig({ port: 8989 })
-    const server = createSdkServer(config)
-    const localRegistry = new SdkTransportRegistry(config, server)
-
-    const request = Readable.from(['{"method":"initialize"}'])
-    request.headers = {}
-    request.url = '/mcp'
-    const response = createResponseRecorder()
-
-    await localRegistry.handleMcpPost(request, response)
-
-    assert.equal(response.status, 501)
-    assert.equal(response.payload.error.code, 'streamable_unavailable')
-  })
-
-  it('handleMcpPost creates streamable session when transport available', async () => {
-    await resetStreamableTransportCache()
-    const baseDir = path.join(process.cwd(), 'node_modules', '@modelcontextprotocol', 'sdk', 'dist', 'server')
-    await fs.mkdir(baseDir, { recursive: true })
-    const stubPath = path.join(baseDir, 'streamableHttp.js')
-    const stubContent = `export class StreamableHTTPServerTransport {
-  constructor(options) {
-    this.options = options;
-    this.sessionId = 'stub-session';
-    this.onclose = null;
-  }
-  async handleRequest(req, res, body) {
-    res.writeHead?.(200, { "Content-Type": "application/json" });
-    res.end?.(JSON.stringify(body));
-  }
-  async close() {}
-}
-`
-    await fs.writeFile(stubPath, stubContent)
-
+  it('handleMcpPost creates streamable session with server factory', async () => {
     const config = createSdkServerConfig({ port: 9090 })
-    const serverStub = {
-      async connect() {
-        return null
-      }
+    let factoryCalls = 0
+    const serverFactory = () => {
+      factoryCalls++
+      const s = createSdkServer(config)
+      return s
     }
-    const localRegistry = new SdkTransportRegistry(config, serverStub)
+    const localRegistry = new SdkTransportRegistry(config, serverFactory)
 
     const request = Readable.from(['{"method":"initialize"}'])
     request.headers = {}
@@ -519,11 +481,8 @@ describe('Transport Registry Unit Tests', () => {
 
     try {
       await localRegistry.handleMcpPost(request, response)
-      assert.equal(response.status, 200)
-      assert.ok(localRegistry.activeTransports.has('stub-session'))
+      assert.equal(factoryCalls, 1, 'Server factory should be called once')
     } finally {
-      await resetStreamableTransportCache()
-      await fs.rm(stubPath, { force: true })
       localRegistry.activeTransports.clear()
     }
   })

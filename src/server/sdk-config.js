@@ -1,9 +1,7 @@
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { createServerConfig } from './config.js'
 import { McpServer } from './mcp-server.js'
-import { loadStreamableTransport } from './loadStreamableTransport.js'
-
-const StreamableHTTPServerTransport = await loadStreamableTransport()
 
 /**
  * Builds the MCP server configuration with remote transport defaults.

@@ -5,7 +5,7 @@ import { registerTranscriptTool } from './server/register-transcript-tool.js'
 
 const SERVER_NAME = 'youtube-transcript-mcp'
 const SERVER_VERSION = '2.0.3'
-const PROTOCOL_VERSION = '2025-03-26'
+const PROTOCOL_VERSION = '2025-06-18'
 
 const FAVICON_DATA = await Deno.readFile(new URL('../static/favicon.ico', import.meta.url))
 const ROBOTS_DATA = await Deno.readTextFile(new URL('../static/robots.txt', import.meta.url))
@@ -64,18 +64,14 @@ app.use('*', cors({
   exposeHeaders: ['Mcp-Session-Id']
 }))
 
-app.get('/favicon.ico', (c) => {
-  return c.body(FAVICON_DATA, 200, {
-    'Content-Type': 'image/x-icon',
-    'Cache-Control': 'public, max-age=86400'
-  })
-})
+app.get('/favicon.ico', (c) => c.body(FAVICON_DATA, 200, {
+  'Content-Type': 'image/x-icon',
+  'Cache-Control': 'public, max-age=86400'
+}))
 
-app.get('/robots.txt', (c) => {
-  return c.text(ROBOTS_DATA, 200, {
-    'Cache-Control': 'public, max-age=3600'
-  })
-})
+app.get('/robots.txt', (c) => c.text(ROBOTS_DATA, 200, {
+  'Cache-Control': 'public, max-age=3600'
+}))
 
 app.post('/mcp', async (c) => {
   let body
@@ -105,12 +101,8 @@ app.post('/mcp', async (c) => {
   return c.json(result, 200, sessionHeaders)
 })
 
-app.get('/mcp', (c) => {
-  return c.json({ error: 'Method Not Allowed' }, 405)
-})
+app.get('/mcp', (c) => c.json({ error: 'Method Not Allowed' }, 405))
 
-app.notFound((c) => {
-  return c.json({ error: 'Not Found' }, 404)
-})
+app.notFound((c) => c.json({ error: 'Not Found' }, 404))
 
 Deno.serve(app.fetch)

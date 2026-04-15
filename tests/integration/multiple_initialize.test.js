@@ -5,6 +5,20 @@ import { skipIfCannotBindLoopback } from '../helpers/env.js'
 
 const PROTOCOL_VERSION = '2025-06-18'
 
+async function parseMcpResponse(response) {
+  const contentType = response.headers.get('content-type') || ''
+  if (contentType.includes('text/event-stream')) {
+    const text = await response.text()
+    for (const line of text.split('\n')) {
+      if (line.startsWith('data: ')) {
+        return JSON.parse(line.slice(6))
+      }
+    }
+    throw new Error('No data line found in SSE response')
+  }
+  return response.json()
+}
+
 describe('Multiple Initialize Attempts Test', () => {
   let server
   let supportsStreamable
@@ -40,13 +54,14 @@ describe('Multiple Initialize Attempts Test', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
         'MCP-Protocol-Version': PROTOCOL_VERSION
       },
       body: JSON.stringify(buildRequest('init-1', 'client-1'))
     })
 
     assert.equal(firstResponse.status, 200, 'First initialize should succeed')
-    const firstPayload = await firstResponse.json()
+    const firstPayload = await parseMcpResponse(firstResponse)
     const sessionIdA = firstResponse.headers.get('mcp-session-id')
     assert.equal(firstPayload.result.protocolVersion, PROTOCOL_VERSION, 'First response should echo protocol version')
     assert.equal(firstPayload.result.serverInfo.name, 'youtube-transcript-mcp', 'Server name should be included')
@@ -56,13 +71,14 @@ describe('Multiple Initialize Attempts Test', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
         'MCP-Protocol-Version': PROTOCOL_VERSION
       },
       body: JSON.stringify(buildRequest('init-2', 'client-2'))
     })
 
     assert.equal(secondResponse.status, 200, 'Second initialize should succeed')
-    const secondPayload = await secondResponse.json()
+    const secondPayload = await parseMcpResponse(secondResponse)
     const sessionIdB = secondResponse.headers.get('mcp-session-id')
     assert.equal(secondPayload.result.protocolVersion, PROTOCOL_VERSION, 'Second response should echo protocol version')
     assert(sessionIdB, 'Second initialize should return session id')
@@ -79,6 +95,7 @@ describe('Multiple Initialize Attempts Test', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
         'MCP-Protocol-Version': PROTOCOL_VERSION
       },
       body: JSON.stringify({
@@ -96,19 +113,17 @@ describe('Multiple Initialize Attempts Test', () => {
     assert.equal(response.status, 200, 'Initialize should succeed before subscribing')
     const sessionId = response.headers.get('mcp-session-id')
     assert(sessionId, 'Subscription initialize should return session id')
+    await response.body?.cancel?.()
 
-    const controller = new AbortController()
     const streamResponse = await globalThis.fetch(`${server.baseUrl}/mcp`, {
       headers: {
         Accept: 'text/event-stream',
         'Mcp-Session-Id': sessionId,
         'MCP-Protocol-Version': PROTOCOL_VERSION
-      },
-      signal: controller.signal
+      }
     })
 
     assert.equal(streamResponse.status, 200, 'Event stream should open for existing session')
-    controller.abort()
     await streamResponse.body?.cancel?.()
   })
 })

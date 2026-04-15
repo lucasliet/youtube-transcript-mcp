@@ -10,10 +10,11 @@ This document establishes the core mission, operational rules, and development w
 
 ## Project Structure & Module Organization
 - `src/cli.js`: Entrypoint. Roda como servidor MCP (stdio) ou servidor remoto SSE.
-- `src/deno-deploy.js`: Entrypoint para Deno Deploy. Implementa MCP/SSE via `Deno.serve()` com Web Fetch API (Request/Response/ReadableStream), sem dependência de `node:http`. Reutiliza `McpServer` e `registerTranscriptTool`. Necessário porque o Deno Deploy é serverless (isolates) e não suporta `node:http .listen()` — localmente o Deno 2 é compatível com node:http e o `start:remote` funciona normalmente.
-- `src/server/*.js`: Transporte HTTP/SSE (config, sessões, handlers, bootstrap).
-- `src/server/sdk-config.js`: Configuração do servidor MCP com @modelcontextprotocol/sdk (initialize/shutdown, capabilities).
-- `src/server/sdk-transport-registry.js`: Registro unificado do endpoint `/mcp` (SSE consolidado + compat legada) e gerenciamento de sessões.
+- `src/deno-deploy.js`: Entrypoint para Deno Deploy. Implementa MCP via `Deno.serve()` com Hono e Web Fetch API (Request/Response/ReadableStream), sem dependência de `node:http`. Reutiliza `McpServer` e `registerTranscriptTool`. Protocol version `2025-06-18`. Necessário porque o Deno Deploy é serverless (isolates) e não suporta `node:http .listen()` — localmente o Deno 2 é compatível com node:http e o `start:remote` funciona normalmente.
+- `src/server/*.js`: Transporte HTTP/SSE/Streamable HTTP (config, sessões, handlers, bootstrap).
+- `src/server/sdk-config.js`: Configuração do servidor MCP com @modelcontextprotocol/sdk (initialize/shutdown, capabilities). Import estático do `StreamableHTTPServerTransport`.
+- `src/server/sdk-transport-registry.js`: Registro unificado do endpoint `/mcp` (SSE + Streamable HTTP) e gerenciamento de sessões. Aceita factory function para criar um `Server` por sessão (SDK 1.x exige um transport por server instance).
+- `src/server/loadStreamableTransport.js`: Re-export estático do `StreamableHTTPServerTransport` do SDK.
 - `src/tool/transcriptYt.js`: Implementação da ferramenta `transcript_yt`.
 - `src/lib/*.js`: Utilitários (extração de ID, fetch/Innertube, seleção de track, parsing/normalização, logs).
 - `src/index.js`: Exporta o array de tools (para hosts que importam o pacote).
@@ -26,7 +27,7 @@ This document establishes the core mission, operational rules, and development w
 ## Build, Test, and Development Commands
 Try to run tests with elevated priviledges (not sudo)
 - `npm run start:stdio`: Inicia o servidor MCP no modo stdio.
-- `npm run start:remote`: Sobe servidor remoto (SDK) expondo `/mcp` via SSE consolidado.
+- `npm run start:remote`: Sobe servidor remoto (SDK) expondo `/mcp` via SSE + Streamable HTTP (compatível com Claude e ChatGPT).
 - `npm run start:deno`: Sobe o servidor Deno localmente via `deno task start` (porta 8000).
 - `npm run dev:stdio`: Observa mudanças e reinicia automaticamente.
 - `npm run dev:remote`: Observa mudanças e reinicia automaticamente em modo remoto.
@@ -61,6 +62,8 @@ Try to run tests with elevated priviledges (not sudo)
 - Resposta MCP deve usar `content` com `type: "text"` contendo JSON serializado.
 - Sem cache e sem truncamento: o consumidor decide paginação/tratamento.
 - Requer Node 18+ com `fetch` nativo (ou Deno 2+ para `src/deno-deploy.js`).
+- SDK: `@modelcontextprotocol/sdk@^1.29.0`. Suporta protocol versions `2025-03-26` (ChatGPT) e `2025-06-18`.
+- `hono` é `optionalDependency` (usado apenas por `src/deno-deploy.js` no Deno Deploy). ESLint ignora `import/no-unresolved` e `import/no-extraneous-dependencies` para `hono` via `optionalDependencies: true` e `ignore` patterns.
 - Servidor público Deno Deploy disponível em `https://youtube-transcript-mcp.deno.dev/mcp`.
 
 ## Manutenção do AGENTS.md

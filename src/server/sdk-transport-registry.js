@@ -1,9 +1,9 @@
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import http from 'node:http'
 import { once } from 'node:events'
 import { randomUUID } from 'node:crypto'
 import { logSdkError, logSdkTransport, SDK_ERROR_CATEGORIES } from '../lib/log.js'
-import { loadStreamableTransport } from './loadStreamableTransport.js'
 
 const SUPPORTED_PROTOCOL_VERSION = '2025-06-18'
 
@@ -25,11 +25,15 @@ export class SdkTransportRegistry {
   /**
    * Creates a registry instance.
    * @param config Remote server configuration object.
-   * @param server MCP server instance to connect transports to.
+   * @param serverOrFactory MCP server instance (legacy) or factory function that creates fresh servers.
    */
-  constructor(config, server) {
+  constructor(config, serverOrFactory) {
     this.config = config
-    this.server = server
+    if (typeof serverOrFactory === 'function') {
+      this.createServer = serverOrFactory
+    } else {
+      this.createServer = () => serverOrFactory
+    }
     this.activeTransports = new Map()
     this.httpServer = null
     this.heartbeatTimers = new Map()
@@ -254,13 +258,15 @@ export class SdkTransportRegistry {
 
       const transport = new SSEServerTransport('/mcp', res)
       res.setHeader('Mcp-Session-Id', transport.sessionId)
-      await this.server.connect(transport)
+      const server = this.createServer()
+      await server.connect(transport)
 
       const sessionId = transport.sessionId
       const tracked = {
         type: 'sse',
         sessionId,
         transport,
+        server,
         response: res,
         createdAt: Date.now(),
         lastActivity: null
@@ -376,22 +382,11 @@ export class SdkTransportRegistry {
    * @returns Promise resolving once the transport has processed the request.
    */
   async createStreamableSession(req, res, body) {
-    const StreamableHTTPServerTransport = await loadStreamableTransport()
-    if (!StreamableHTTPServerTransport) {
-      res.writeHead(501, { 'Content-Type': 'application/json' })
-      res.end(JSON.stringify({
-        error: {
-          code: 'streamable_unavailable',
-          message: 'Streamable HTTP transport is not available. Establish an SSE session with GET /mcp instead.'
-        }
-      }))
-      return
-    }
-
     const tracked = {
       type: 'streamable',
       sessionId: undefined,
       transport: undefined,
+      server: undefined,
       createdAt: Date.now(),
       lastActivity: Date.now()
     }
@@ -416,7 +411,9 @@ export class SdkTransportRegistry {
       }
     }
 
-    await this.server.connect(transport)
+    const server = this.createServer()
+    tracked.server = server
+    await server.connect(transport)
 
     try {
       await transport.handleRequest(req, res, body)

@@ -10,10 +10,14 @@ import { registerTranscriptTool } from './register-transcript-tool.js'
  */
 export async function startSdkRemoteServer(overrides = {}) {
   const config = createSdkServerConfig(overrides)
-  const server = createSdkServer(config)
-  registerTranscriptTool(server)
 
-  const registry = new SdkTransportRegistry(config, server)
+  const serverFactory = () => {
+    const server = createSdkServer(config)
+    registerTranscriptTool(server)
+    return server
+  }
+
+  const registry = new SdkTransportRegistry(config, serverFactory)
   const serverInfo = await registry.start()
 
   async function close() {
