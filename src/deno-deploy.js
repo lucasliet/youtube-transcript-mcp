@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { McpServer } from './server/mcp-server.js'
 import { registerTranscriptTool } from './server/register-transcript-tool.js'
+import { handleTranscriptRequest } from './server/rest-transcript-handler.js'
 
 const SERVER_NAME = 'youtube-transcript-mcp'
 const SERVER_VERSION = '2.0.3'
@@ -102,6 +103,13 @@ app.post('/mcp', async (c) => {
 })
 
 app.get('/mcp', (c) => c.json({ error: 'Method Not Allowed' }, 405))
+
+app.get('/transcript', async (c) => {
+  const result = await handleTranscriptRequest(c.req.url, {})
+  return c.json(result.body, result.status, { 'Content-Type': 'application/json' })
+})
+
+app.all('/transcript', (c) => c.json({ error: { code: 'method_not_allowed', message: 'Method Not Allowed' } }, 405))
 
 app.notFound((c) => c.json({ error: 'Not Found' }, 404))
 

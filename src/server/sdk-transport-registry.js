@@ -4,6 +4,7 @@ import http from 'node:http'
 import { once } from 'node:events'
 import { randomUUID } from 'node:crypto'
 import { logSdkError, logSdkTransport, SDK_ERROR_CATEGORIES } from '../lib/log.js'
+import { handleTranscriptRequest } from './rest-transcript-handler.js'
 
 const SUPPORTED_PROTOCOL_VERSION = '2025-06-18'
 
@@ -51,6 +52,17 @@ export class SdkTransportRegistry {
         if (req.method === 'OPTIONS') {
           res.writeHead(204)
           res.end()
+          return
+        }
+
+        if (req.method === 'GET' && this.isTranscriptEndpoint(req.url)) {
+          await this.handleTranscript(req, res)
+          return
+        }
+
+        if (req.method !== 'OPTIONS' && this.isTranscriptEndpoint(req.url)) {
+          res.writeHead(405, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: { code: 'method_not_allowed', message: 'Method Not Allowed' } }))
           return
         }
 
@@ -159,6 +171,36 @@ export class SdkTransportRegistry {
     if (!url) return false
     const [pathname] = url.split('?')
     return pathname === '/mcp'
+  }
+
+  /**
+   * Checks whether the URL targets the REST transcript endpoint.
+   * @param url Request URL string.
+   * @returns True when the URL corresponds to /transcript.
+   */
+  isTranscriptEndpoint(url) {
+    if (!url) return false
+    const [pathname] = url.split('?')
+    return pathname === '/transcript'
+  }
+
+  /**
+   * Handles GET /transcript requests by delegating to the pure REST handler.
+   * @param req Incoming HTTP request whose URL carries query parameters.
+   * @param res HTTP response used to return JSON results.
+   * @returns Promise that resolves once the response has been sent.
+   */
+  async handleTranscript(req, res) {
+    try {
+      const result = await handleTranscriptRequest(req.url, {
+        transcriptImpl: this.config.transcriptImpl
+      })
+      res.writeHead(result.status, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify(result.body))
+    } catch (err) {
+      console.error('REST transcript handler error:', err)
+      this.sendError(res, 500, 'Internal Server Error')
+    }
   }
 
   /**

@@ -3,7 +3,7 @@
 ## Core Principles
 
 ### I. Entrega de uma única ferramenta
-O pacote deve continuar focado na ferramenta `transcript_yt`, preservando contrato, argumentos e formato de resposta. Novas funcionalidades só são aceitas quando estendem a experiência dessa ferramenta (ex.: transporte remoto) sem fragmentar o produto em múltiplas APIs.
+O pacote deve continuar focado na ferramenta `transcript_yt`, preservando contrato, argumentos e formato de resposta. Novas funcionalidades só são aceitas quando estendem a experiência dessa ferramenta (canais: CLI, MCP stdio, MCP HTTP/SSE e REST HTTP) sem fragmentar o produto em múltiplas APIs.
 
 ### II. Simplicidade operacional
 Implementações priorizam dependências nativas do Node.js 18+, evitando frameworks adicionais. Arquiteturas novas precisam caber no mesmo processo do CLI e manter a paridade entre os modos stdio e remoto, reutilizando módulos existentes sempre que possível.
@@ -45,4 +45,4 @@ Após cada implementação significativa (nova funcionalidade, mudança de arqui
 
 Esta regra garante que a documentação evolua junto com o código e mantenha a consistência do projeto.
 
-**Version**: 2.2.0 | **Ratified**: 2025-09-17 | **Last Amended**: 2025-09-25
+**Version**: 2.3.0 | **Ratified**: 2025-09-17 | **Last Amended**: 2026-07-19

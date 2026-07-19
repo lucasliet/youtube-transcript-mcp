@@ -11,6 +11,7 @@ Ferramenta MCP para obter transcrições de vídeos do YouTube com timestamps e 
 - [Compatível com OpenAI SDK (Chat Completions Tools)](#compatível-com-openai-sdk-chat-completions-tools)
 - [Configuração como MCP Server](#configuração-como-mcp-server)
 - [Deploy no Deno Deploy (MCP Remoto)](#deploy-no-deno-deploy-mcp-remoto)
+- [REST API](#rest-api)
 - [Formato de entrada e saída](#formato-de-entrade-e-saída)
 - [Regras de Seleção de Legenda](#regras-de-seleção-de-legenda)
 - [Comportamento de Erro](#comportamento-de-erro)
@@ -196,6 +197,63 @@ curl -N http://localhost:8000/mcp
 | `OPTIONS` | `*` | CORS preflight (permite `*`) |
 
 Métodos MCP suportados: `initialize`, `ping`, `tools/list`, `tools/call`.
+
+## REST API
+
+Além dos canais CLI, MCP stdio e MCP HTTP/SSE, o servidor remoto expõe uma rota REST pura `GET /transcript` — sem protocolo MCP, sem sessão, sem handshake. Útil para integrações diretas (curl, scripts, webhooks, browser). Disponível apenas em modo `remote` (`start:remote` ou `deno-deploy`), compartilhando o mesmo `httpServer` do endpoint `/mcp`.
+
+### Endpoint
+
+```
+GET /transcript?videoUrl=<YouTube URL>&preferredLanguages=<CSV opcional>
+```
+
+### Parâmetros (query string)
+
+| Parâmetro | Obrigatório | Descrição |
+|-----------|-------------|-----------|
+| `videoUrl` | sim | URL completa do vídeo YouTube (`watch?v=`, `youtu.be/`, `embed/`, `v/`, `live/`). |
+| `preferredLanguages` | não | Lista ordenada de códigos de idioma em formato CSV (ex.: `pt-BR,en`). Matching case-insensitive com prefixo. |
+
+### Exemplo curl
+
+```bash
+curl "http://localhost:3333/transcript?videoUrl=https://www.youtube.com/watch?v=dQw4w9WgXcQ&preferredLanguages=pt-BR,en"
+```
+
+### Status codes
+
+| Status | Code                          | Quando |
+|--------|-------------------------------|--------|
+| 200    | —                             | Sucesso. `body.segments` contém o array de segmentos. |
+| 400    | `invalid_request`             | `videoUrl` ausente ou impossível extrair um id válido. |
+| 405    | `method_not_allowed`          | Método HTTP diferente de `GET`/`OPTIONS`. |
+| 502    | `transcript_unavailable`      | Falha ao obter transcrição (YouTube bloqueou, vídeo privado/sem legendas, rede, playability error). O `transcript_yt` já loga internamente categorias; o handler REST só retorna status genérico. |
+
+### Shape da resposta
+
+Sucesso (200):
+```json
+{
+  "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "preferredLanguages": ["pt-BR", "en"],
+  "segments": [
+    { "text": "Intro...", "startInMs": 0, "duration": 2300 }
+  ]
+}
+```
+
+Erro (400/502):
+```json
+{
+  "error": {
+    "code": "transcript_unavailable",
+    "message": "Unable to retrieve transcript"
+  }
+}
+```
+
+> A rota reutiliza internamente a mesma implementação de `transcript_yt` usada pelos outros canais — não há duplicação de lógica de fetch/parse. CORS, timeout e afins seguem as configurações globais do servidor remoto.
 
 ## Formato de entrade e saída
 Entrada:

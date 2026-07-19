@@ -8,7 +8,8 @@ const DEFAULTS = {
   maxClients: 10,
   allowedOrigins: undefined,
   allowedHosts: undefined,
-  enableDnsRebindingProtection: false
+  enableDnsRebindingProtection: false,
+  transcriptImpl: undefined
 }
 
 /**

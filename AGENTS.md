@@ -10,12 +10,13 @@ This document establishes the core mission, operational rules, and development w
 
 ## Project Structure & Module Organization
 - `src/cli.js`: Entrypoint. Roda como servidor MCP (stdio) ou servidor remoto SSE.
-- `src/deno-deploy.js`: Entrypoint para Deno Deploy. Implementa MCP via `Deno.serve()` com Hono e Web Fetch API (Request/Response/ReadableStream), sem dependência de `node:http`. Reutiliza `McpServer` e `registerTranscriptTool`. Protocol version `2025-06-18`. Necessário porque o Deno Deploy é serverless (isolates) e não suporta `node:http .listen()` — localmente o Deno 2 é compatível com node:http e o `start:remote` funciona normalmente.
-- `src/server/*.js`: Transporte HTTP/SSE/Streamable HTTP (config, sessões, handlers, bootstrap).
+- `src/deno-deploy.js`: Entrypoint para Deno Deploy. Implementa MCP via `Deno.serve()` com Hono e Web Fetch API (Request/Response/ReadableStream), sem dependência de `node:http`. Reutiliza `McpServer` e `registerTranscriptTool`. Expose também a rota REST `/transcript`. Protocol version `2025-06-18`. Necessário porque o Deno Deploy é serverless (isolates) e não suporta `node:http .listen()` — localmente o Deno 2 é compatível com node:http e o `start:remote` funciona normalmente.
+- `src/server/*.js`: Transporte HTTP/SSE/Streamable HTTP (config, sessões, handlers, bootstrap) e handler REST.
 - `src/server/sdk-config.js`: Configuração do servidor MCP com @modelcontextprotocol/sdk (initialize/shutdown, capabilities). Import estático do `StreamableHTTPServerTransport`.
-- `src/server/sdk-transport-registry.js`: Registro unificado do endpoint `/mcp` (SSE + Streamable HTTP) e gerenciamento de sessões. Aceita factory function para criar um `Server` por sessão (SDK 1.x exige um transport por server instance).
+- `src/server/sdk-transport-registry.js`: Registro unificado do endpoint `/mcp` (SSE + Streamable HTTP) e gerenciamento de sessões. Aceita factory function para criar um `Server` por sessão (SDK 1.x exige um transport por server instance). Despacha também `GET /transcript` para o handler REST.
+- `src/server/rest-transcript-handler.js`: Handler puro da rota REST `GET /transcript`. Reutiliza `transcriptYt` via `transcriptImpl` injetável; retorna `{ status, body }` com 400/200/502 — sem protocolo MCP, sem sessão.
 - `src/server/loadStreamableTransport.js`: Re-export estático do `StreamableHTTPServerTransport` do SDK.
-- `src/tool/transcriptYt.js`: Implementação da ferramenta `transcript_yt`.
+- `src/tool/transcriptYt.js`: Implementação da ferramenta `transcript_yt` (única fonte de lógica de fetch/parse; reutilizada por CLI, MCP stdio, MCP HTTP/SSE e REST).
 - `src/lib/*.js`: Utilitários (extração de ID, fetch/Innertube, seleção de track, parsing/normalização, logs).
 - `src/index.js`: Exporta o array de tools (para hosts que importam o pacote).
 - `deno.json`: Configuração do Deno (`nodeModulesDir: auto`, tasks `start` e `dev`).
@@ -23,6 +24,13 @@ This document establishes the core mission, operational rules, and development w
 - `specs/###-feature/*`: Documentos de spec/plan/tasks por feature.
 - `.specify/…`: Infraestrutura do spec-kit (memórias, scripts, templates).
 - `specs/002-remote-mcp-server/*`: Extend the existing YouTube Transcript MCP CLI to expose an optional remote HTTP mode using Server-Sent Events. Remote clients connect via GET /mcp (consolidated endpoint), exchange JSON-RPC requests with POST /mcp, and stream responses (ready, message, error, heartbeat) without impacting stdio usage. The release keeps the tool contract identical e adiciona flags de hospedagem remota, limites de concorrência e controles de heartbeat/timeout.
+
+## Canais de uso da ferramenta `transcript_yt`
+A ferramenta possui quatro canais oficiais que compartilham a mesma implementação em `src/tool/transcriptYt.js`:
+1. **CLI one-off**: `node src/cli.js --videoUrl ...` — imprime JSON no stdout.
+2. **MCP stdio**: servidor MCP sobre stdio para hosts como Claude Desktop.
+3. **MCP HTTP/SSE**: servidor remoto exposto em `/mcp` (SDK oficial, com sessões, heartbeats e Streamable HTTP).
+4. **REST HTTP**: rota pura `GET /transcript` no mesmo `httpServer` do `/mcp`, sem protocolo MCP e sem sessão. Útil para integrações diretas (curl, scripts, webhooks). Disponível apenas em modo remote (`start:remote` ou `deno-deploy`).
 
 ## Build, Test, and Development Commands
 Try to run tests with elevated priviledges (not sudo)
