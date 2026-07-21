@@ -27,7 +27,7 @@ describe('SDK Error Scenarios Integration', () => {
   })
 
   it('should handle invalid endpoints correctly', () => {
-    const invalidPaths = ['/invalid', '/api/test', '/health', '/mcp/invalid']
+    const invalidPaths = ['/invalid', '/api/test', '/mcp/invalid']
 
     invalidPaths.forEach((path) => {
       assert.equal(registry.isMcpEndpoint(path), false, 'Should not recognize invalid MCP endpoint')

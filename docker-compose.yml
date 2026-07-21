@@ -1,0 +1,12 @@
+services:
+  youtube-transcript-mcp:
+    image: ghcr.io/lucasliet/youtube-transcript-mcp:latest
+    # Para build local em vez de puxar do GHCR:
+    # build: .
+    container_name: youtube-transcript-mcp
+    ports:
+      - "7495:7495"
+    restart: unless-stopped
+    # Endpoints disponíveis:
+    #   MCP (SSE + Streamable HTTP): http://localhost:7495/mcp
+    #   REST pura:                   http://localhost:7495/transcript?videoUrl=<url>

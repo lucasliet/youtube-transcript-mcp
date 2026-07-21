@@ -118,3 +118,43 @@ describe('REST /transcript endpoint', () => {
     return undefined
   })
 })
+
+describe('GET /health endpoint', () => {
+  let server
+  let baseUrl
+
+  before(async (t) => {
+    const canBind = await skipIfCannotBindLoopback(t)
+    if (!canBind) return undefined
+    server = await startSdkRemoteServer({
+      port: 0,
+      host: '127.0.0.1',
+      cors: true
+    })
+    baseUrl = server.baseUrl
+    return undefined
+  })
+
+  after(async () => {
+    if (server) await server.close()
+  })
+
+  it('returns 200 with status ok on GET /health', async (t) => {
+    if (!baseUrl) { t.skip('loopback unavailable'); return undefined }
+    const res = await fetch(baseUrl + '/health')
+    assert.equal(res.status, 200)
+    assert.deepEqual(await res.json(), { status: 'ok' })
+    return undefined
+  })
+
+  it('returns 405 on POST /health', async (t) => {
+    if (!baseUrl) { t.skip('loopback unavailable'); return undefined }
+    const res = await fetch(baseUrl + '/health', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    })
+    assert.equal(res.status, 405)
+    return undefined
+  })
+})

@@ -55,6 +55,18 @@ export class SdkTransportRegistry {
           return
         }
 
+        if (req.method === 'GET' && this.isHealthEndpoint(req.url)) {
+          res.writeHead(200, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ status: 'ok' }))
+          return
+        }
+
+        if (this.isHealthEndpoint(req.url)) {
+          res.writeHead(405, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: { code: 'method_not_allowed', message: 'Method Not Allowed' } }))
+          return
+        }
+
         if (req.method === 'GET' && this.isTranscriptEndpoint(req.url)) {
           await this.handleTranscript(req, res)
           return
@@ -171,6 +183,17 @@ export class SdkTransportRegistry {
     if (!url) return false
     const [pathname] = url.split('?')
     return pathname === '/mcp'
+  }
+
+  /**
+   * Checks whether the URL targets the health endpoint.
+   * @param url Request URL string.
+   * @returns True when the URL corresponds to /health.
+   */
+  isHealthEndpoint(url) {
+    if (!url) return false
+    const [pathname] = url.split('?')
+    return pathname === '/health'
   }
 
   /**

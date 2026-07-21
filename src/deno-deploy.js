@@ -74,6 +74,10 @@ app.get('/robots.txt', (c) => c.text(ROBOTS_DATA, 200, {
   'Cache-Control': 'public, max-age=3600'
 }))
 
+app.get('/health', (c) => c.json({ status: 'ok' }))
+
+app.all('/health', (c) => c.json({ error: { code: 'method_not_allowed', message: 'Method Not Allowed' } }, 405))
+
 app.post('/mcp', async (c) => {
   let body
   try {
