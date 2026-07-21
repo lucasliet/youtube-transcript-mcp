@@ -26,4 +26,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -q -O- http://127.0.0.1:8000/health | grep -q '"status":"ok"' || exit 1
 
-CMD ["deno", "run", "--allow-net", "--allow-env", "--allow-read", "src/deno-deploy.js"]
+CMD ["deno", "run", "--allow-net", "--allow-env", "--allow-read", "--cached-only", "src/deno-deploy.js"]
