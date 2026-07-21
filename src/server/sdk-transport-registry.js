@@ -6,8 +6,6 @@ import { randomUUID } from 'node:crypto'
 import { logHttpRequest, logSdkError, logSdkTransport, LOG_LEVELS, SDK_ERROR_CATEGORIES } from '../lib/log.js'
 import { handleTranscriptRequest } from './rest-transcript-handler.js'
 
-const SUPPORTED_PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26']
-
 /**
  * Checks whether a request body corresponds to an MCP initialize message.
  * @param body Parsed JSON request payload.
@@ -309,54 +307,6 @@ export class SdkTransportRegistry {
   }
 
   /**
-   * Extracts the MCP protocol version header from the incoming request.
-   * @param req Incoming HTTP request instance.
-   * @returns Normalized protocol version string or undefined when missing.
-   */
-  getProtocolVersionHeader(req) {
-    const raw = req?.headers?.['mcp-protocol-version']
-    if (raw === undefined || raw === null) {
-      return undefined
-    }
-    const value = Array.isArray(raw) ? raw[0] : raw
-    if (value === undefined || value === null) {
-      return undefined
-    }
-    const normalized = String(value).trim()
-    return normalized.length > 0 ? normalized : undefined
-  }
-
-  /**
-   * Validates whether the MCP protocol version header matches the supported version.
-   * @param req Incoming HTTP request instance.
-   * @param res Outgoing HTTP response used to report validation failures.
-   * @returns True when the request may proceed, false when the response was sent.
-   */
-  validateProtocolVersion(req, res) {
-    const version = this.getProtocolVersionHeader(req)
-    if (!version || SUPPORTED_PROTOCOL_VERSIONS.includes(version)) {
-      return true
-    }
-
-    logSdkError(
-      SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
-      'Unsupported MCP protocol version: ' + version,
-      undefined,
-      { version, supported: SUPPORTED_PROTOCOL_VERSIONS }
-    )
-
-    res.writeHead(400, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({
-      error: {
-        code: 'invalid_protocol_version',
-        message: 'Unsupported MCP protocol version',
-        supported: SUPPORTED_PROTOCOL_VERSIONS
-      }
-    }))
-    return false
-  }
-
-  /**
    * Handles SSE connection establishment for consolidated MCP endpoint.
    * @param req Incoming HTTP request.
    * @param res HTTP response used to stream SSE events.
@@ -364,10 +314,6 @@ export class SdkTransportRegistry {
    */
   async handleSseConnection(req, res) {
     try {
-      if (!this.validateProtocolVersion(req, res)) {
-        return
-      }
-
       if (this.isAtCapacity()) {
         res.writeHead(429, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({
@@ -432,9 +378,6 @@ export class SdkTransportRegistry {
    * @returns Promise that resolves once the request lifecycle completes.
    */
   async handleMcpPost(req, res) {
-    if (!this.validateProtocolVersion(req, res)) {
-      return
-    }
     const sessionId = this.extractSessionId(req)
 
     if (sessionId) {
@@ -566,9 +509,6 @@ export class SdkTransportRegistry {
    * @returns Promise resolved after the transport processes the request.
    */
   async handleStreamableGet(sessionId, req, res) {
-    if (!this.validateProtocolVersion(req, res)) {
-      return
-    }
     const tracked = this.getStreamableSession(sessionId, res)
     if (!tracked) {
       return
@@ -584,9 +524,6 @@ export class SdkTransportRegistry {
    * @returns Promise resolved after the transport completes handling.
    */
   async handleStreamableDelete(req, res) {
-    if (!this.validateProtocolVersion(req, res)) {
-      return
-    }
     const sessionId = this.extractSessionId(req)
     if (!sessionId) {
       this.sendError(res, 400, 'Missing session ID')

@@ -13,7 +13,7 @@ This document establishes the core mission, operational rules, and development w
 - `src/deno-deploy.js`: Entrypoint para Deno Deploy **e para a imagem Docker** (paridade total entre o deploy público e self-hosted). Implementa MCP via `Deno.serve()` com Hono e Web Fetch API (Request/Response/ReadableStream), sem dependência de `node:http`. Reutiliza `McpServer` e `registerTranscriptTool`. Expose também a rota REST `/transcript`. Sem gate de `MCP-Protocol-Version` — aceita qualquer versão (`2025-03-26`, `2025-06-18`, `2025-11-25`) e responde `initialize` com `protocolVersion: 2025-06-18`. Necessário porque o Deno Deploy é serverless (isolates) e não suporta `node:http .listen()` — localmente o Deno 2 é compatível com node:http e o `start:remote` funciona normalmente.
 - `src/server/*.js`: Transporte HTTP/SSE/Streamable HTTP (config, sessões, handlers, bootstrap) e handler REST.
 - `src/server/sdk-config.js`: Configuração do servidor MCP com @modelcontextprotocol/sdk (initialize/shutdown, capabilities). Import estático do `StreamableHTTPServerTransport`.
-- `src/server/sdk-transport-registry.js`: Registro unificado do endpoint `/mcp` (SSE + Streamable HTTP) e gerenciamento de sessões. Aceita factory function para criar um `Server` por sessão (SDK 1.x exige um transport por server instance). Despacha também `GET /transcript` para o handler REST.
+- `src/server/sdk-transport-registry.js`: Registro unificado do endpoint `/mcp` (SSE + Streamable HTTP) e gerenciamento de sessões. Aceita factory function para criar um `Server` por sessão (SDK 1.x exige um transport por server instance). Despacha também `GET /transcript` para o handler REST. Não valida/gateia `MCP-Protocol-Version` — delega a negociação ao SDK no `initialize` (paridade de I/O com o `deno-deploy`).
 - `src/server/rest-transcript-handler.js`: Handler puro da rota REST `GET /transcript`. Reutiliza `transcriptYt` via `transcriptImpl` injetável; retorna `{ status, body }` com 400/200/502 — sem protocolo MCP, sem sessão.
 - `src/server/loadStreamableTransport.js`: Re-export estático do `StreamableHTTPServerTransport` do SDK.
 - `src/tool/transcriptYt.js`: Implementação da ferramenta `transcript_yt` (única fonte de lógica de fetch/parse; reutilizada por CLI, MCP stdio, MCP HTTP/SSE e REST).
@@ -70,7 +70,7 @@ Try to run tests with elevated priviledges (not sudo)
 - Resposta MCP deve usar `content` com `type: "text"` contendo JSON serializado.
 - Sem cache e sem truncamento: o consumidor decide paginação/tratamento.
 - Requer Node 18+ com `fetch` nativo (ou Deno 2+ para `src/deno-deploy.js`).
-- SDK: `@modelcontextprotocol/sdk@^1.29.0`. Suporta protocol versions `2025-03-26` (ChatGPT) e `2025-06-18`.
+- SDK: `@modelcontextprotocol/sdk@^1.29.0`. Nenhum canal gateia `MCP-Protocol-Version`; o SDK negocia a versão no `initialize` (validado com `2025-03-26`, `2025-06-18` e `2025-11-25`).
 - `hono` é `optionalDependency` (usado apenas por `src/deno-deploy.js` no Deno Deploy). ESLint ignora `import/no-unresolved` e `import/no-extraneous-dependencies` para `hono` via `optionalDependencies: true` e `ignore` patterns.
 - Servidor público Deno Deploy disponível em `https://youtube-transcript-mcp.deno.dev/mcp`.
 

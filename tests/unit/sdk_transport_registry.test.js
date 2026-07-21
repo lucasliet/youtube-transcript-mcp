@@ -74,30 +74,6 @@ describe('Transport Registry Unit Tests', () => {
     assert.equal(invalid, undefined)
   })
 
-  it('should reject unsupported protocol versions', () => {
-    const config = createSdkServerConfig({ port: 4747 })
-    const server = createSdkServer(config)
-    const localRegistry = new SdkTransportRegistry(config, server)
-    const response = {
-      status: null,
-      headers: null,
-      payload: null,
-      writeHead(code, headers) {
-        this.status = code
-        this.headers = headers
-      },
-      end(body) {
-        this.payload = JSON.parse(body)
-      }
-    }
-
-    const allowed = localRegistry.validateProtocolVersion({ headers: { 'mcp-protocol-version': '2024-01-01' } }, response)
-
-    assert.equal(allowed, false)
-    assert.equal(response.status, 400)
-    assert.equal(response.payload.error.code, 'invalid_protocol_version')
-  })
-
   it('should return structured response for deprecated endpoints', () => {
     const config = createSdkServerConfig({ port: 5555 })
     const server = createSdkServer(config)
@@ -513,19 +489,6 @@ describe('Transport Registry Unit Tests', () => {
     assert.ok(tracked.lastActivity > 0)
   })
 
-  it('handleStreamableGet validates protocol version before proceeding', async () => {
-    const config = createSdkServerConfig({ port: 9595 })
-    const server = createSdkServer(config)
-    const localRegistry = new SdkTransportRegistry(config, server)
-    const request = { headers: { 'mcp-protocol-version': '2024-01-01' }, url: '/mcp' }
-    const response = createResponseRecorder()
-
-    await localRegistry.handleStreamableGet('any', request, response)
-
-    assert.equal(response.status, 400)
-    assert.equal(response.payload.error.code, 'invalid_protocol_version')
-  })
-
   it('handleStreamableGet returns when session not found', async () => {
     const config = createSdkServerConfig({ port: 9696 })
     const server = createSdkServer(config)
@@ -618,19 +581,6 @@ describe('Transport Registry Unit Tests', () => {
     } finally {
       createServerStub.mock.restore()
     }
-  })
-
-  it('handleStreamableDelete validates protocol version', async () => {
-    const config = createSdkServerConfig({ port: 9292 })
-    const server = createSdkServer(config)
-    const localRegistry = new SdkTransportRegistry(config, server)
-    const request = { headers: { 'mcp-protocol-version': '2024-01-01' }, url: '/mcp' }
-    const response = createResponseRecorder()
-
-    await localRegistry.handleStreamableDelete(request, response)
-
-    assert.equal(response.status, 400)
-    assert.equal(response.payload.error.code, 'invalid_protocol_version')
   })
 
   it('handleStreamableDelete requires session id', async () => {
