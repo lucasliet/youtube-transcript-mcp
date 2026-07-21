@@ -1,22 +1,29 @@
 # syntax=docker/dockerfile:1
 
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --omit=optional && npm cache clean --force
-
-FROM node:20-alpine
-ENV NODE_ENV=production
+FROM denoland/deno:alpine-2.9.3 AS deps
 WORKDIR /app
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json ./
+COPY package.json package-lock.json deno.json deno.lock ./
 COPY src ./src
 
-USER node
-EXPOSE 7495
+# --frozen fails the build if deno.lock drifts from package.json; deno cache
+# precompiles the module graph so runtime startup needs no package downloads.
+RUN deno install --frozen && deno cache src/deno-deploy.js
+
+# Mirrors the Deno Deploy entrypoint so self-hosted containers stay
+# behaviorally identical to the public https://youtube-transcript-mcp.deno.dev.
+FROM denoland/deno:alpine-2.9.3 AS runtime
+WORKDIR /app
+
+COPY --from=deps /app /app
+COPY --from=deps /deno-dir /deno-dir
+COPY static ./static
+RUN chown -R deno:deno /deno-dir
+
+USER deno
+EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:7495/health').then(r=>r.json().then(b=>process.exit(r.status===200&&b.status==='ok'?0:1))).catch(()=>process.exit(1))"
+  CMD wget -q -O- http://127.0.0.1:8000/health | grep -q '"status":"ok"' || exit 1
 
-CMD ["node", "src/cli.js", "--mode", "remote", "--host", "0.0.0.0", "--port", "7495", "--cors", "*"]
+CMD ["deno", "run", "--allow-net", "--allow-env", "--allow-read", "src/deno-deploy.js"]

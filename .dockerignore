@@ -7,12 +7,9 @@ coverage
 .specify
 specs
 tests
-static
 *.md
 !README.md
 .DS_Store
-deno.json
-deno.lock
 Dockerfile
 docker-compose.yml
 .dockerignore

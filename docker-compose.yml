@@ -5,8 +5,9 @@ services:
     # build: .
     container_name: youtube-transcript-mcp
     ports:
-      - "7495:7495"
+      - "7495:8000"
     restart: unless-stopped
-    # Endpoints disponíveis:
-    #   MCP (SSE + Streamable HTTP): http://localhost:7495/mcp
-    #   REST pura:                   http://localhost:7495/transcript?videoUrl=<url>
+    # Endpoints disponíveis (espelham o deploy do Deno Deploy):
+    #   MCP (Streamable HTTP): http://localhost:7495/mcp
+    #   REST pura:             http://localhost:7495/transcript?videoUrl=<url>
+    #   Health:                http://localhost:7495/health

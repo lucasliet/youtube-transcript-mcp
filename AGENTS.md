@@ -10,7 +10,7 @@ This document establishes the core mission, operational rules, and development w
 
 ## Project Structure & Module Organization
 - `src/cli.js`: Entrypoint. Roda como servidor MCP (stdio) ou servidor remoto SSE.
-- `src/deno-deploy.js`: Entrypoint para Deno Deploy. Implementa MCP via `Deno.serve()` com Hono e Web Fetch API (Request/Response/ReadableStream), sem dependência de `node:http`. Reutiliza `McpServer` e `registerTranscriptTool`. Expose também a rota REST `/transcript`. Protocol version `2025-06-18`. Necessário porque o Deno Deploy é serverless (isolates) e não suporta `node:http .listen()` — localmente o Deno 2 é compatível com node:http e o `start:remote` funciona normalmente.
+- `src/deno-deploy.js`: Entrypoint para Deno Deploy **e para a imagem Docker** (paridade total entre o deploy público e self-hosted). Implementa MCP via `Deno.serve()` com Hono e Web Fetch API (Request/Response/ReadableStream), sem dependência de `node:http`. Reutiliza `McpServer` e `registerTranscriptTool`. Expose também a rota REST `/transcript`. Sem gate de `MCP-Protocol-Version` — aceita qualquer versão (`2025-03-26`, `2025-06-18`, `2025-11-25`) e responde `initialize` com `protocolVersion: 2025-06-18`. Necessário porque o Deno Deploy é serverless (isolates) e não suporta `node:http .listen()` — localmente o Deno 2 é compatível com node:http e o `start:remote` funciona normalmente.
 - `src/server/*.js`: Transporte HTTP/SSE/Streamable HTTP (config, sessões, handlers, bootstrap) e handler REST.
 - `src/server/sdk-config.js`: Configuração do servidor MCP com @modelcontextprotocol/sdk (initialize/shutdown, capabilities). Import estático do `StreamableHTTPServerTransport`.
 - `src/server/sdk-transport-registry.js`: Registro unificado do endpoint `/mcp` (SSE + Streamable HTTP) e gerenciamento de sessões. Aceita factory function para criar um `Server` por sessão (SDK 1.x exige um transport por server instance). Despacha também `GET /transcript` para o handler REST.
@@ -52,7 +52,7 @@ Try to run tests with elevated priviledges (not sudo)
 - Indentação: 2 espaços; sem ponto‑e‑vírgula; aspas simples.
 - Nomes de arquivos: `kebab`/`lowercase` (ex.: `fetchWatchHtml.js`, `parseSegments.js`).
 - Funções pequenas, coesas, nomes descritivos. Evite comentários supérfluos; deixe o código autoexplicativo.
-- Segurança/observabilidade: não persista dados, não inclua segredos, mantenha logs mínimos e categorizados. Logs HTTP devem evitar query strings e payloads; `/health` expõe apenas metadados operacionais seguros (`status`, serviço, versão, uptime, sessões ativas e limite de clientes).
+- Segurança/observabilidade: não persista dados, não inclua segredos, mantenha logs mínimos e categorizados. Logs HTTP devem evitar query strings e payloads; `/health` expõe apenas metadados operacionais seguros (`status`, serviço, versão, uptime, sessões ativas e limite de clientes) **no modo Node `start:remote`** — no entrypoint Deno (`deno-deploy`/Docker) o `/health` retorna apenas `{"status":"ok"}`.
 
 ## Testing Guidelines
 - Framework: `node:test` e `node:assert/strict`.

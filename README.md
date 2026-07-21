@@ -201,15 +201,15 @@ Métodos MCP suportados: `initialize`, `ping`, `tools/list`, `tools/call`.
 
 ### Docker
 
-A imagem container executa o servidor remoto na porta `7495` e escreve logs em `stderr`, então `docker logs youtube-transcript-mcp` deve mostrar pelo menos a linha de startup e os access logs dos endpoints HTTP atendidos. O healthcheck usa `GET /health`.
+A imagem container roda o mesmo entrypoint do Deno Deploy (`src/deno-deploy.js`) sobre `denoland/deno`, então o comportamento é idêntico ao deploy público — sem gate de versão de protocolo, aceitando `2025-03-26`, `2025-06-18` e `2025-11-25`. O processo escuta na porta interna `8000`; mapeie para a porta host que preferir (ex.: `7495`).
 
 ```bash
-docker run --rm --name youtube-transcript-mcp -p 7495:7495 ghcr.io/lucasliet/youtube-transcript-mcp:latest
+docker run --rm --name youtube-transcript-mcp -p 7495:8000 ghcr.io/lucasliet/youtube-transcript-mcp:latest
 curl http://localhost:7495/health
 docker logs youtube-transcript-mcp
 ```
 
-O payload de `/health` inclui metadados operacionais seguros: `status`, `service`, `version`, `uptimeSeconds`, `activeSessions` e `maxClients`.
+O healthcheck usa `GET /health`, que neste entrypoint retorna apenas `{"status":"ok"}` (o modo Node `start:remote` expõe metadados extras como versão/uptime/sessões; o container Deno não).
 
 ## REST API
 
