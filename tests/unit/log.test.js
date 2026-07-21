@@ -32,9 +32,12 @@ test('logSdkTransport emits transport category logs', () => {
   console.error = (...args) => messages.push(args.join(' '))
   try {
     logModule.logSdkTransport('connected', { type: 'sse', sessionId: 'session-1' })
-    assert.equal(messages.length, 1)
+    logModule.logSdkTransport('connected', { type: 'streamable', sessionId: 'session-2' })
+    assert.equal(messages.length, 2)
     assert.ok(messages[0].includes('[sse_transport] Transport event: connected'))
     assert.ok(messages[0].includes('(session: session-1)'))
+    assert.ok(messages[1].includes('[streamable_transport] Transport event: connected'))
+    assert.ok(messages[1].includes('(session: session-2)'))
   } finally {
     console.error = originalError
   }
@@ -63,6 +66,27 @@ test('logError maps legacy categories to SDK categories', () => {
     assert.equal(messages.length, 2)
     assert.ok(messages[0].includes('[legacy_endpoint] deprecated'))
     assert.ok(messages[1].includes('[sdk_error] fallback'))
+  } finally {
+    console.error = originalError
+  }
+})
+
+test('logHttpRequest emits safe access logs without query strings', () => {
+  const originalError = console.error
+  const messages = []
+  console.error = (...args) => messages.push(args.join(' '))
+  try {
+    logModule.logHttpRequest({
+      method: 'GET',
+      url: '/transcript?videoUrl=https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      statusCode: 502,
+      durationMs: 12
+    })
+
+    assert.equal(messages.length, 1)
+    assert.ok(messages[0].includes('[http_request] GET /transcript 502 12ms'))
+    assert.equal(messages[0].includes('videoUrl'), false)
+    assert.equal(messages[0].includes('dQw4w9WgXcQ'), false)
   } finally {
     console.error = originalError
   }

@@ -3,7 +3,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import http from 'node:http'
 import { once } from 'node:events'
 import { randomUUID } from 'node:crypto'
-import { logSdkError, logSdkTransport, SDK_ERROR_CATEGORIES } from '../lib/log.js'
+import { logHttpRequest, logSdkError, logSdkTransport, LOG_LEVELS, SDK_ERROR_CATEGORIES } from '../lib/log.js'
 import { handleTranscriptRequest } from './rest-transcript-handler.js'
 
 const SUPPORTED_PROTOCOL_VERSION = '2025-06-18'
@@ -17,6 +17,15 @@ function isInitializeRequestBody(body) {
   if (!body || typeof body !== 'object') return false
   if (body.method !== 'initialize') return false
   return true
+}
+
+/**
+ * Converts thrown values into a consistent message for logging.
+ * @param error Thrown value.
+ * @returns Error message string.
+ */
+function getErrorMessage(error) {
+  return error instanceof Error ? error.message : String(error)
 }
 
 /**
@@ -46,6 +55,18 @@ export class SdkTransportRegistry {
    */
   async start() {
     this.httpServer = http.createServer(async (req, res) => {
+      const startedAt = Date.now()
+      let shouldLogRequest = !this.isHealthEndpoint(req.url)
+      res.on?.('finish', () => {
+        if (shouldLogRequest) {
+          logHttpRequest({
+            method: req.method,
+            url: req.url,
+            statusCode: res.statusCode,
+            durationMs: Date.now() - startedAt
+          })
+        }
+      })
       try {
         this.setupCorsHeaders(res)
 
@@ -57,7 +78,7 @@ export class SdkTransportRegistry {
 
         if (req.method === 'GET' && this.isHealthEndpoint(req.url)) {
           res.writeHead(200, { 'Content-Type': 'application/json' })
-          res.end(JSON.stringify({ status: 'ok' }))
+          res.end(JSON.stringify(this.createHealthPayload()))
           return
         }
 
@@ -85,6 +106,7 @@ export class SdkTransportRegistry {
               await this.handleStreamableGet(sessionId, req, res)
               return
             }
+            shouldLogRequest = false
             await this.handleSseConnection(req, res)
             return
           }
@@ -117,7 +139,10 @@ export class SdkTransportRegistry {
         res.writeHead(404, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({ code: 'not_found', message: 'Not Found' }))
       } catch (err) {
-        console.error('Transport registry error:', err)
+        const message = getErrorMessage(err)
+        logSdkError(SDK_ERROR_CATEGORIES.SDK_ERROR, 'Transport registry error: ' + message, undefined, {
+          error: message
+        })
         this.sendError(res, 500, 'Internal Server Error')
       }
     })
@@ -134,7 +159,29 @@ export class SdkTransportRegistry {
     const actualPort = typeof address === 'object' && address ? address.port : this.config.port
     const baseUrl = 'http://' + (this.config.host === '0.0.0.0' ? '127.0.0.1' : this.config.host) + ':' + actualPort
 
+    logSdkError(
+      SDK_ERROR_CATEGORIES.SERVER_LIFECYCLE,
+      `Remote server listening on ${baseUrl}`,
+      LOG_LEVELS.INFO,
+      { host: this.config.host, port: actualPort }
+    )
+
     return { baseUrl, port: actualPort }
+  }
+
+  /**
+   * Builds the health payload exposed to container health checks and operators.
+   * @returns Health payload with safe runtime metadata.
+   */
+  createHealthPayload() {
+    return {
+      status: 'ok',
+      service: this.config.serverInfo?.name || 'youtube-transcript-mcp',
+      version: this.config.serverInfo?.version,
+      uptimeSeconds: Math.floor(process.uptime()),
+      activeSessions: this.activeTransports.size,
+      maxClients: this.config.maxClients
+    }
   }
 
   /**
@@ -218,10 +265,23 @@ export class SdkTransportRegistry {
       const result = await handleTranscriptRequest(req.url, {
         transcriptImpl: this.config.transcriptImpl
       })
+      if (result.status >= 400) {
+        const errorCode = result.body && result.body.error ? result.body.error.code : 'unknown_error'
+        logSdkError(
+          SDK_ERROR_CATEGORIES.HTTP_REQUEST,
+          'REST transcript request failed with ' + errorCode,
+          undefined,
+          { statusCode: result.status, route: '/transcript' }
+        )
+      }
       res.writeHead(result.status, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify(result.body))
     } catch (err) {
-      console.error('REST transcript handler error:', err)
+      const message = getErrorMessage(err)
+      logSdkError(SDK_ERROR_CATEGORIES.HTTP_REQUEST, 'REST transcript handler error: ' + message, undefined, {
+        route: '/transcript',
+        error: message
+      })
       this.sendError(res, 500, 'Internal Server Error')
     }
   }
@@ -668,7 +728,10 @@ export class SdkTransportRegistry {
       try {
         await tracked.transport.close?.()
       } catch (err) {
-        console.error('Error closing transport:', err)
+        const message = getErrorMessage(err)
+        logSdkError(SDK_ERROR_CATEGORIES.SDK_ERROR, 'Error closing transport: ' + message, undefined, {
+          error: message
+        })
       }
     }
     this.activeTransports.clear()

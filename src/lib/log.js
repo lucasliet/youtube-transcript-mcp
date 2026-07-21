@@ -15,6 +15,7 @@ const SDK_ERROR_CATEGORIES = {
   MCP_INITIALIZE: 'mcp_initialize',
   MCP_SHUTDOWN: 'mcp_shutdown',
   SSE_TRANSPORT: 'sse_transport',
+  STREAMABLE_TRANSPORT: 'streamable_transport',
   SSE_CONNECTION: 'sse_connection',
   SSE_MESSAGE: 'sse_message',
   SESSION_INVALID: 'session_invalid',
@@ -24,7 +25,9 @@ const SDK_ERROR_CATEGORIES = {
   LEGACY_COMPATIBILITY: 'legacy_compatibility',
   SDK_ERROR: 'sdk_error',
   SDK_CONFIG: 'sdk_config',
-  SDK_TIMEOUT: 'sdk_timeout'
+  SDK_TIMEOUT: 'sdk_timeout',
+  HTTP_REQUEST: 'http_request',
+  SERVER_LIFECYCLE: 'server_lifecycle'
 }
 
 /**
@@ -61,7 +64,11 @@ export function logSdkError(category, message, level = LOG_LEVELS.ERROR, context
  * @param details Event details
  */
 export function logSdkTransport(event, details = {}) {
-  const category = details.type === 'sse' ? SDK_ERROR_CATEGORIES.SSE_TRANSPORT : SDK_ERROR_CATEGORIES.SDK_ERROR
+  const categoryMap = {
+    sse: SDK_ERROR_CATEGORIES.SSE_TRANSPORT,
+    streamable: SDK_ERROR_CATEGORIES.STREAMABLE_TRANSPORT
+  }
+  const category = categoryMap[details.type] || SDK_ERROR_CATEGORIES.SDK_ERROR
   logSdkError(category, `Transport event: ${event}`, LOG_LEVELS.INFO, details)
 }
 
@@ -79,6 +86,35 @@ export function logMcpProtocol(event, details = {}) {
   }
   const category = categoryMap[event] || SDK_ERROR_CATEGORIES.MCP_PROTOCOL
   logSdkError(category, `MCP protocol event: ${event}`, LOG_LEVELS.INFO, details)
+}
+
+/**
+ * Logs one safe HTTP access line without query strings or user payloads.
+ * @param {object} details HTTP request details.
+ * @param {string} details.method HTTP method.
+ * @param {string} details.url Request URL path and query.
+ * @param {number} details.statusCode Response status code.
+ * @param {number} details.durationMs Request duration in milliseconds.
+ */
+export function logHttpRequest({ method, url, statusCode, durationMs }) {
+  const route = sanitizeRoute(url)
+  const roundedDuration = Math.max(0, Math.round(Number(durationMs) || 0))
+  logSdkError(
+    SDK_ERROR_CATEGORIES.HTTP_REQUEST,
+    `${method || 'UNKNOWN'} ${route} ${statusCode || 0} ${roundedDuration}ms`,
+    LOG_LEVELS.INFO
+  )
+}
+
+/**
+ * Removes query strings from request URLs before logging.
+ * @param {string} url Request URL path and optional query.
+ * @returns {string} Safe route string suitable for logs.
+ */
+function sanitizeRoute(url) {
+  if (!url || typeof url !== 'string') return '/unknown'
+  const [pathname] = url.split('?')
+  return pathname || '/unknown'
 }
 
 /**

@@ -12,7 +12,7 @@ Implementações priorizam dependências nativas do Node.js 18+, evitando framew
 Toda alteração significativa começa por testes automatizados (contratos, integração e unidade) que reproduzem o cenário alvo. Somente após observar o RED é permitido implementar. A qualidade do código é garantida por gates automatizados: `npm run lint`, `npm run jscpd`, `npm run depcheck` e `npm run coverage`. O relatório de cobertura deve permanecer em ≥90% de linhas e statements por arquivo em `src/`, sob pena de bloqueio de merge. Regressões no stdio são tratadas com prioridade máxima.
 
 ### IV. Observabilidade enxuta
-Logs devem ser categorizados (`invalid_request`, `tool_error`, etc.), com mensagens curtas e sem dados pessoais. Métricas externas ficam a cargo do operador; o projeto limita-se a fornecer hooks de log e códigos de erro consistentes.
+Logs devem ser categorizados (`invalid_request`, `tool_error`, `http_request`, etc.), com mensagens curtas e sem dados pessoais. Access logs HTTP podem registrar método, rota sem query string, status e duração. `/health` deve expor apenas metadados operacionais seguros. Métricas externas ficam a cargo do operador; o projeto limita-se a fornecer hooks de log e códigos de erro consistentes.
 
 ### V. Segurança e privacidade pragmáticas
 Nenhum segredo é armazenado ou versionado. Configurações sensíveis são lidas via variáveis de ambiente ou argumentos. O servidor remoto deve respeitar CORS configurável, evitar vazamento de dados do YouTube e seguir tempos limite para impedir abuso.
@@ -45,4 +45,4 @@ Após cada implementação significativa (nova funcionalidade, mudança de arqui
 
 Esta regra garante que a documentação evolua junto com o código e mantenha a consistência do projeto.
 
-**Version**: 2.3.0 | **Ratified**: 2025-09-17 | **Last Amended**: 2026-07-19
+**Version**: 2.3.1 | **Ratified**: 2025-09-17 | **Last Amended**: 2026-07-20 | **Reason**: document safe HTTP access logs and operational health metadata

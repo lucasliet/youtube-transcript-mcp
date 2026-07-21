@@ -52,7 +52,7 @@ Try to run tests with elevated priviledges (not sudo)
 - Indentação: 2 espaços; sem ponto‑e‑vírgula; aspas simples.
 - Nomes de arquivos: `kebab`/`lowercase` (ex.: `fetchWatchHtml.js`, `parseSegments.js`).
 - Funções pequenas, coesas, nomes descritivos. Evite comentários supérfluos; deixe o código autoexplicativo.
-- Segurança: não persista dados, não inclua segredos, e mantenha logs mínimos e categorizados.
+- Segurança/observabilidade: não persista dados, não inclua segredos, mantenha logs mínimos e categorizados. Logs HTTP devem evitar query strings e payloads; `/health` expõe apenas metadados operacionais seguros (`status`, serviço, versão, uptime, sessões ativas e limite de clientes).
 
 ## Testing Guidelines
 - Framework: `node:test` e `node:assert/strict`.

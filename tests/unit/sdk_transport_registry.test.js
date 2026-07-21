@@ -568,6 +568,13 @@ describe('Transport Registry Unit Tests', () => {
       await capturedHandler({ method: 'OPTIONS' }, optionsRes)
       assert.equal(optionsRes.status, 204)
 
+      const healthRes = createResponseRecorder()
+      await capturedHandler({ method: 'GET', url: '/health', headers: {} }, healthRes)
+      assert.equal(healthRes.status, 200)
+      assert.equal(healthRes.payload.status, 'ok')
+      assert.equal(healthRes.payload.uptimeSeconds >= 0, true)
+      assert.equal(typeof healthRes.payload.activeSessions, 'number')
+
       let getHits = 0
       localRegistry.handleStreamableGet = async () => { getHits += 1 }
       await capturedHandler({ method: 'GET', url: '/mcp', headers: { 'mcp-session-id': 'abc' } }, createResponseRecorder())

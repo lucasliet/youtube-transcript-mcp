@@ -130,6 +130,7 @@ Recursos chave:
 - `Mcp-Session-Id` exposto via header para transporte HTTP e SSE.
 - Compatibilidade legada: `/mcp/events` e `/mcp/messages` retornam mensagens de migração.
 - Conexões liveness: heartbeats periódicos e limpeza de sessões expiradas.
+- Observabilidade enxuta: log de startup, access logs sem query string para endpoints HTTP e logs categorizados de falhas.
 
 Flags úteis:
 - `--host`: Host/IP para bind do servidor (padrão: `0.0.0.0`)
@@ -197,6 +198,18 @@ curl -N http://localhost:8000/mcp
 | `OPTIONS` | `*` | CORS preflight (permite `*`) |
 
 Métodos MCP suportados: `initialize`, `ping`, `tools/list`, `tools/call`.
+
+### Docker
+
+A imagem container executa o servidor remoto na porta `7495` e escreve logs em `stderr`, então `docker logs youtube-transcript-mcp` deve mostrar pelo menos a linha de startup e os access logs dos endpoints HTTP atendidos. O healthcheck usa `GET /health`.
+
+```bash
+docker run --rm --name youtube-transcript-mcp -p 7495:7495 ghcr.io/lucasliet/youtube-transcript-mcp:latest
+curl http://localhost:7495/health
+docker logs youtube-transcript-mcp
+```
+
+O payload de `/health` inclui metadados operacionais seguros: `status`, `service`, `version`, `uptimeSeconds`, `activeSessions` e `maxClients`.
 
 ## REST API
 

@@ -139,11 +139,16 @@ describe('GET /health endpoint', () => {
     if (server) await server.close()
   })
 
-  it('returns 200 with status ok on GET /health', async (t) => {
+  it('returns 200 with observable runtime status on GET /health', async (t) => {
     if (!baseUrl) { t.skip('loopback unavailable'); return undefined }
     const res = await fetch(baseUrl + '/health')
     assert.equal(res.status, 200)
-    assert.deepEqual(await res.json(), { status: 'ok' })
+    const body = await res.json()
+    assert.equal(body.status, 'ok')
+    assert.equal(body.service, 'youtube-transcript-mcp')
+    assert.equal(body.uptimeSeconds >= 0, true)
+    assert.equal(typeof body.activeSessions, 'number')
+    assert.equal(typeof body.maxClients, 'number')
     return undefined
   })
 
