@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto'
 import { logHttpRequest, logSdkError, logSdkTransport, LOG_LEVELS, SDK_ERROR_CATEGORIES } from '../lib/log.js'
 import { handleTranscriptRequest } from './rest-transcript-handler.js'
 
-const SUPPORTED_PROTOCOL_VERSION = '2025-06-18'
+const SUPPORTED_PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26']
 
 /**
  * Checks whether a request body corresponds to an MCP initialize message.
@@ -334,7 +334,7 @@ export class SdkTransportRegistry {
    */
   validateProtocolVersion(req, res) {
     const version = this.getProtocolVersionHeader(req)
-    if (!version || version === SUPPORTED_PROTOCOL_VERSION) {
+    if (!version || SUPPORTED_PROTOCOL_VERSIONS.includes(version)) {
       return true
     }
 
@@ -342,7 +342,7 @@ export class SdkTransportRegistry {
       SDK_ERROR_CATEGORIES.MCP_PROTOCOL,
       'Unsupported MCP protocol version: ' + version,
       undefined,
-      { version, supported: SUPPORTED_PROTOCOL_VERSION }
+      { version, supported: SUPPORTED_PROTOCOL_VERSIONS }
     )
 
     res.writeHead(400, { 'Content-Type': 'application/json' })
@@ -350,7 +350,7 @@ export class SdkTransportRegistry {
       error: {
         code: 'invalid_protocol_version',
         message: 'Unsupported MCP protocol version',
-        supported: SUPPORTED_PROTOCOL_VERSION
+        supported: SUPPORTED_PROTOCOL_VERSIONS
       }
     }))
     return false

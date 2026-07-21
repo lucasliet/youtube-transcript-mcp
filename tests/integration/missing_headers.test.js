@@ -74,7 +74,7 @@ describe('Missing Headers Error Scenario', () => {
     assert.equal(res.statusCode, 400, 'Unsupported protocol should return 400')
     const payload = JSON.parse(res.body)
     assert.equal(payload.error.code, 'invalid_protocol_version', 'Should respond with invalid_protocol_version error')
-    assert.equal(payload.error.supported, '2025-06-18', 'Should include supported protocol version')
+    assert.deepEqual(payload.error.supported, ['2025-06-18', '2025-03-26'], 'Should list all supported protocol versions')
   })
 
   it('should accept supported MCP protocol versions', () => {
@@ -86,6 +86,17 @@ describe('Missing Headers Error Scenario', () => {
 
     assert.equal(result, true, 'Supported protocol should allow request to proceed')
     assert.equal(res.statusCode, undefined, 'Supported protocol should not modify response')
+  })
+
+  it('should accept the 2025-03-26 protocol version used by ChatGPT and SSE clients', () => {
+    const req = {
+      headers: { 'mcp-protocol-version': '2025-03-26' }
+    }
+    const res = createResponseStub()
+    const result = registry.validateProtocolVersion(req, res)
+
+    assert.equal(result, true, '2025-03-26 should allow request to proceed')
+    assert.equal(res.statusCode, undefined, '2025-03-26 should not modify response')
   })
 })
 
